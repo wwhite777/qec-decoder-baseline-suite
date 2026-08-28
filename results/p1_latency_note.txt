@@ -1,0 +1,36 @@
+P1 QEC decoder — STREAMING SINGLE-SHOT (online) decode latency
+====================================================================================================
+Each number below is the distribution of INDIVIDUAL per-shot decode calls (one
+syndrome frame in, one correction out), timed one at a time with perf_counter.
+This is ONLINE latency. It is NOT the same as the batch-amortized us/round reported
+in the baseline CSVs (those time a whole vectorized batch and divide by shots*rounds).
+Batch throughput amortizes per-call overhead and reuses warm caches; the online tail
+(p95/p99) is what a real-time decoder must meet to keep up with the syndrome stream.
+====================================================================================================
+         decoder  family                  noise    median       p50       p95       p99       max   unit
+MWPM (pymatching) surface   circuit-level (Stim)    10.29u    10.29u    15.18u    19.54u    26.54u   per detector frame (=1 shot = 25 rounds)
+MWPM (pymatching) surface   circuit-level (Stim)    22.02u    22.02u    30.27u    37.07u    55.91u   per detector frame (=1 shot = 25 rounds)
+   BP-OSD (ldpc)    bb72          code-capacity     8.12u     8.12u    12.44u    21.90u   212.93u   per shot (single-shot syndrome)
+   BP-OSD (ldpc)   bb144          code-capacity    15.86u    15.86u    29.33u    40.01u   499.12u   per shot (single-shot syndrome)
+   BP-OSD (ldpc)    bb72 phenomenological (T=6)   120.94u   120.94u  2933.02u  3179.32u  4957.94u   per shot (T-round space-time frame)
+
+(units: u = microseconds per decode call)
+
+READING THE NUMBERS:
+  * MWPM surface is a per-DETECTOR-FRAME decode; the frame already spans all 25 rounds
+    of the memory experiment, so to compare to a <1 us/round target divide by 25.
+  * BP-OSD code-capacity is a single-shot syndrome decode (no time dimension).
+  * BP-OSD phenomenological decodes a whole T-round space-time frame at once, so its
+    per-round figure is (value / T). Its tail is dominated by the OSD fallback firing
+    on hard syndromes -> heavy right tail (p99 >> median), the key online-latency risk.
+
+CAVEATS (be honest):
+  * All timings are single-threaded Python-level wall-clock on a shared CPU; absolute
+    values carry interpreter + scheduler overhead and are an UPPER bound on a tuned
+    C++/FPGA deployment. The DISTRIBUTION SHAPE (median vs tail) is the transferable
+    finding, not the absolute microseconds.
+  * pymatching.decode / ldpc.decode still cross the Python<->C++ boundary once per call;
+    a native streaming implementation would remove that fixed overhead uniformly.
+  * This measures the classical reference decoders only. A neural decoder's online
+    latency must be measured the SAME way (one frame at a time, incl. host<->GPU copy),
+    NOT as a large-batch GPU throughput number, or the comparison is invalid.

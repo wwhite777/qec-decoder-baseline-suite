@@ -1,0 +1,6 @@
+commit	primary	memory_gb	status	description
+mwpm000	6.000000e-05	0.0	run	baseline MWPM surface d=7 (p=1e-3,r=25); LER/round=2.400e-06
+nn-mlp0	8.265000e-02	0.445	run	code-blind MLP (negative control) surface d=5 (LER 8.27e-02 >> MWPM 7.80e-04); ece=0.073
+bposd0	8.780000e-03	0.0	run	BP-OSD [[72,12,6]] code-capacity (p=0.02); fails=439/50000
+nn-dnet0	5.010500e-01	0.0	run	DeltaNet-mixer neural decoder (negative control) bb72 p=0.04 (LER 5.01e-01 >> BP-OSD 7.94e-02); per-logical-bit acc 0.86; 8410 steps/300s
+bposdph0	5.300000e-02	0.0	run	BP-OSD [[72,12,6]] PHENOM T=6 (p=q=0.02); fails=106/2000

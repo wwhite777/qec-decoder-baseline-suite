@@ -1,0 +1,206 @@
+"""
+NEGATIVE CONTROL: a code-blind DeltaNet-style sequence mixer as a neural qLDPC decoder,
+scored head-to-head against BP-OSD on the SAME frozen validation set.
+
+Question: does an off-the-shelf linear-attention sequence mixer, given the syndrome as a
+bare bit vector and a small fixed training budget, learn to decode a bivariate-bicycle
+code (where MWPM does not apply)? Answer, measured: no. It lands near chance on the
+12-bit logical target. Reported as a negative control, never as a competitive decoder.
+See docs/p1_neural_gap.md for why the failure is structural.
+
+Setup (code-capacity, matching baseline_bposd.py / prepare_qldpc.py):
+  * Code: bb72 = [[72,12,6]] (default) at a single physical error rate p.
+  * Task framing (AlphaQubit-style logical-flip prediction): the decoder reads the Z-check
+    syndrome s = H_Z e (m_Z bits) and predicts the k-bit LOGICAL FLIP  f = L_Z e (mod 2),
+    i.e. which of the k=12 logical qubits the error flips. A shot is a LOGICAL FAILURE iff
+    the predicted flip vector != the true flip vector (any of the k bits wrong).
+    -> This is exactly the quantity BP-OSD's LER also measures (did the logical state
+       survive), so the two LERs are directly comparable at the same p.
+  * Architecture: syndrome bit -> learned token embed (+ positional) -> DeltaNet mixer
+    -> mean-pool -> linear head -> k logits. BCE loss on the k logical-flip bits.
+  * Train on FRESH samples (seed != prepare_qldpc.SEED, so no val leakage); EVALUATE on the
+    exact frozen val set generate_dataset(...) that BP-OSD used.
+
+Run (GPU 0):
+    CUDA_VISIBLE_DEVICES=0 python neural_bposd_bonus.py [bb72|bb144] [p]
+
+Requires a DeltaNet implementation. By default we import `DeltaNet` from `fla.layers`
+(`pip install flash-linear-attention einops`); point $DELTANET_MODULE at any other importable
+module exposing a compatible `DeltaNet` class. If the import fails this script exits
+loudly; the BP-OSD baseline (baseline_bposd.py) stands on its own.
+"""
+from __future__ import annotations
+import importlib
+import os, sys, time
+
+import numpy as np
+import scipy.sparse as sp
+import torch
+import torch.nn as nn
+
+import prepare_qldpc as Q
+
+# Pluggable sequence mixer: any module exposing DeltaNet(hidden_size, num_heads,
+# use_gate, use_short_conv) whose forward returns (output, *rest).
+_DELTANET_MODULE = os.environ.get("DELTANET_MODULE", "fla.layers")
+DeltaNet = importlib.import_module(_DELTANET_MODULE).DeltaNet
+
+TRAIN_SEED = 777              # != prepare_qldpc.SEED -> disjoint from frozen val set
+TRAIN_SHOTS = 200_000
+TIME_BUDGET_S = 300           # fixed training wall-clock budget
+BATCH = 1024
+D_MODEL = 96
+N_HEADS = 4
+LR = 2e-3
+
+
+class SyndromeDeltaNetDecoder(nn.Module):
+    """Syndrome bits -> DeltaNet sequence mixer -> k logical-flip logits."""
+
+    def __init__(self, m_syn: int, k: int, d_model=D_MODEL, n_heads=N_HEADS):
+        super().__init__()
+        self.bit_embed = nn.Embedding(2, d_model)          # value 0/1 -> token
+        self.pos_embed = nn.Parameter(torch.randn(1, m_syn, d_model) * 0.02)
+        self.mixer = DeltaNet(hidden_size=d_model, num_heads=n_heads,
+                              use_gate=True, use_short_conv=True)
+        self.norm = nn.LayerNorm(d_model)
+        self.head = nn.Linear(d_model, k)
+
+    def forward(self, syn_bits):                            # syn_bits: long [B, m]
+        x = self.bit_embed(syn_bits) + self.pos_embed       # [B, m, D]
+        o, _, _ = self.mixer(x)                             # [B, m, D]
+        pooled = self.norm(o.mean(dim=1))                   # [B, D]
+        return self.head(pooled)                            # [B, k] logits
+
+
+def logical_flip_targets(errors, LZ):
+    """f = L_Z e (mod 2), shape [shots, k]."""
+    return (errors.astype(int) @ LZ.T.astype(int) % 2).astype(np.float32)
+
+
+def main():
+    _env_t0 = time.time()
+    code = sys.argv[1] if len(sys.argv) > 1 else "bb72"
+    p = float(sys.argv[2]) if len(sys.argv) > 2 else 0.04
+    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    torch.manual_seed(0)
+
+    HX, HZ = Q.build_bb_code(code)
+    LX, LZ = Q.css_logicals(HX, HZ)
+    n, m_syn, k = HX.shape[1], HZ.shape[0], LZ.shape[0]
+    cs = Q.code_str(code)
+    print(f"[neural bonus] {code}={cs} n={n} m_syn={m_syn} k={k} p={p} device={dev}")
+
+    # --- fresh training data (disjoint seed) ---
+    rng = np.random.default_rng(TRAIN_SEED)
+    err_tr = (rng.random((TRAIN_SHOTS, n)) < p).astype(np.uint8)
+    syn_tr = (err_tr @ HZ.T.astype(int) % 2).astype(np.int64)
+    y_tr = logical_flip_targets(err_tr, LZ)
+    syn_tr_t = torch.from_numpy(syn_tr)
+    y_tr_t = torch.from_numpy(y_tr)
+
+    # --- frozen val set (exactly what BP-OSD saw) ---
+    ds = Q.generate_dataset(code, p)                        # seed = prepare_qldpc.SEED
+    err_va, syn_va = ds["errors"], ds["syndromes"]
+    y_va = logical_flip_targets(err_va, LZ)                 # [Nval, k]
+    syn_va_t = torch.from_numpy(syn_va.astype(np.int64)).to(dev)
+
+    model = SyndromeDeltaNetDecoder(m_syn, k).to(dev)
+    opt = torch.optim.AdamW(model.parameters(), lr=LR)
+    lossf = nn.BCEWithLogitsLoss()
+    nparam = sum(pp.numel() for pp in model.parameters())
+    print(f"[neural bonus] params={nparam/1e6:.2f}M  train_shots={TRAIN_SHOTS}  budget={TIME_BUDGET_S}s")
+
+    # --- compile/CUDA warmup OUTSIDE the timed budget (the Δ-rule kernel is
+    #     @torch.compile; first fwd+bwd triggers a ~1min compile we must not
+    #     charge to the 300s training budget) ---
+    model.train()
+    N = syn_tr_t.shape[0]
+    _idx = torch.randint(0, N, (BATCH,))
+    _l = lossf(model(syn_tr_t[_idx].to(dev)), y_tr_t[_idx].to(dev))
+    _l.backward(); opt.zero_grad()
+    if dev == "cuda":
+        torch.cuda.synchronize()
+    print(f"[neural bonus] warmup+compile done in {time.time()-_env_t0:.0f}s; "
+          f"starting {TIME_BUDGET_S}s training clock")
+
+    # --- fixed-budget training ---
+    t0 = time.time()
+    step = 0
+    while time.time() - t0 < TIME_BUDGET_S:
+        idx = torch.randint(0, N, (BATCH,))
+        sb = syn_tr_t[idx].to(dev)
+        yb = y_tr_t[idx].to(dev)
+        logit = model(sb)
+        loss = lossf(logit, yb)
+        opt.zero_grad(); loss.backward(); opt.step()
+        step += 1
+        if step % 200 == 0:
+            print(f"  step {step:5d}  loss {loss.item():.4f}  "
+                  f"({time.time()-t0:.0f}s)")
+    train_s = time.time() - t0
+
+    # --- evaluate neural LER on the frozen val set ---
+    model.eval()
+    preds = []
+    with torch.no_grad():
+        for i in range(0, syn_va_t.shape[0], 4096):
+            logit = model(syn_va_t[i:i + 4096])
+            preds.append((torch.sigmoid(logit) > 0.5).cpu().numpy().astype(np.uint8))
+    pred_flip = np.concatenate(preds, axis=0)              # [Nval, k]
+    true_flip = y_va.astype(np.uint8)
+    fails = int(np.any(pred_flip != true_flip, axis=1).sum())
+    nval = len(true_flip)
+    neural_ler = fails / nval
+
+    # per-logical accuracy (informative)
+    per_bit_acc = (pred_flip == true_flip).mean(axis=0)
+
+    # --- latency (wall-clock, us per shot) ---
+    warm = syn_va_t[:256]
+    with torch.no_grad():
+        model(warm)
+        if dev == "cuda":
+            torch.cuda.synchronize()
+        tl = time.time()
+        for i in range(0, syn_va_t.shape[0], 4096):
+            model(syn_va_t[i:i + 4096])
+        if dev == "cuda":
+            torch.cuda.synchronize()
+        lat_us = (time.time() - tl) / nval * 1e6
+
+    # --- BP-OSD reference at the same (code, p) on the SAME val set ---
+    from ldpc import BpOsdDecoder
+    dec = BpOsdDecoder(sp.csr_matrix(HZ), error_rate=p, max_iter=50,
+                       bp_method="minimum_sum", ms_scaling_factor=0.625,
+                       schedule="serial", osd_method="OSD_CS", osd_order=7)
+    bposd_fails = 0
+    for i in range(nval):
+        ehat = dec.decode(syn_va[i].astype(np.uint8)).astype(np.uint8)
+        resid = err_va[i].astype(np.uint8) ^ ehat
+        if ((LZ.astype(int) @ resid.astype(int)) % 2).any():
+            bposd_fails += 1
+    bposd_ler = bposd_fails / nval
+
+    print("\n" + "=" * 64)
+    print(f"NEURAL (DeltaNet mixer) vs BP-OSD  |  {code}={cs}  p={p}  Nval={nval}")
+    print("-" * 64)
+    print(f"  BP-OSD   LER = {bposd_ler:.4e}  ({bposd_fails}/{nval})")
+    print(f"  Neural   LER = {neural_ler:.4e}  ({fails}/{nval})   "
+          f"[{'BEATS' if neural_ler < bposd_ler else 'loses to'} BP-OSD]")
+    print(f"  neural per-logical-bit acc: min={per_bit_acc.min():.3f} "
+          f"mean={per_bit_acc.mean():.3f}")
+    print(f"  neural latency = {lat_us:.2f} us/shot (batched, {dev})   "
+          f"trained {step} steps in {train_s:.0f}s")
+    print("=" * 64)
+    # machine-readable summary block
+    print("---")
+    print(f"logical_error_rate: {neural_ler:.8f}")
+    print(f"bposd_ref_ler:      {bposd_ler:.8f}")
+    print(f"decode_latency_us:  {lat_us:.4f}")
+    print(f"train_steps:        {step}")
+    print(f"val_shots:          {nval}")
+
+
+if __name__ == "__main__":
+    main()
