@@ -8,8 +8,7 @@ decoder whose median decode takes 121 microseconds takes 3,179 microseconds one 
 in a hundred. Neither fact is visible in the way classical baselines are usually
 reported.**
 
-This repository is the artifact for a workshop paper (NeurIPS-2026-style ML4PS / QEC
-workshop; anonymous, artifact/short-paper track — **not** main track). It proposes no
+This repository is the artifact for an unpublished short paper. It proposes no
 decoder. It publishes the measurement that learned-decoder papers are implicitly
 comparing against, with the error bars and the timing methodology made explicit.
 
