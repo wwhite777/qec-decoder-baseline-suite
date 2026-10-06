@@ -178,7 +178,7 @@ order 7.
   tail — transfers.
 - **The rare-event points are under-resolved by design of the shot budget**, not by
   accident. Resolving surface `d >= 7` or bb144 at `p = 0.02` to a point estimate needs
-  1e6–1e7 shots (roughly 100 logical failures for a ±10% interval).
+  1e6–1e7 shots (roughly 100 logical failures for a ~10% relative standard error; the 95% interval then still spans about −19% to +22%).
 - **Arm C covers one code.** Only `[[72,12,6]]` is reported under phenomenological noise;
   the `[[144,12,12]]` run (`T = 12`) did not complete.
 - **The learned decoders are negative controls only.** No comparison in this repository
