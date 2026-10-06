@@ -91,7 +91,8 @@ The LER falls with distance at every sampled `p`. No threshold is estimated.
 
 ### Arm B: BB codes, BP-OSD, code capacity
 
-The frozen sets (below) resolve every point except `[[144,12,12]]` at `p = 0.02`, which had 2 failures in 50,000 shots.
+In the frozen sets (below), every point has at least 30 failures except `[[144,12,12]]` at `p = 0.02`, which had 2
+failures in 50,000 shots.
 The fixed-sample run gives 266 / 3,000,000 = 8.9e-5, 95% interval [7.8e-5, 1.0e-4].
 
 ### Arm C: BB codes, BP-OSD, phenomenological noise (fixed-sample runs)
