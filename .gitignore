@@ -10,6 +10,7 @@ env/
 .cache/
 *.npz
 !data/frozen_validation/*.npz
+!results/v3/latency_sessions/*.npz
 
 # Editors / OS
 .vscode/

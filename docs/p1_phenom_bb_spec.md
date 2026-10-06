@@ -230,7 +230,7 @@ Clopper-Pearson intervals — see `p1_intervals.py`).
 
 ---
 
-## 8. What this model is NOT (honest boundary)
+## 8. What this model is NOT (scope)
 
 This is **phenomenological**, not **circuit-level**. It models data errors + measurement
 errors round-by-round with a perfect temporal boundary, which is strictly harder than

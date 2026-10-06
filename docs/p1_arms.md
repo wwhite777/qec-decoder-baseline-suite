@@ -1,6 +1,6 @@
-# P1 — Benchmark Arm Separation (noise models are NOT comparable across families)
+# Benchmark arm separation (noise models are NOT comparable across families)
 
-**One-line summary.** The P1 experiments live in **three separate benchmark arms** that use
+**One-line summary.** The experiments live in **three separate benchmark arms** that use
 **different noise models** and therefore have **different, non-comparable physical
 error-rate axes**. Any claim about "neural decoding" must be made **per arm**; a decoder that
 wins on one arm has said nothing about the others, and LER numbers must never be compared
@@ -12,9 +12,9 @@ point-for-point across arms.
 
 | Arm | Code family | Decoder reference | Noise model | `p` axis / config | Data source | Result CSV |
 |-----|-------------|-------------------|-------------|-------------------|-------------|------------|
-| **A. Surface (circuit-level)** | rotated surface code, `d = 5,7,9,11` | MWPM (`pymatching`) | **Circuit-level** depolarizing: `after_clifford_depolarization`, `before_measure_flip`, `after_reset_flip`, `before_round_data_depolarization`, all `= p`, over `ROUNDS = 25` rounds; decoded on the Stim **detector-error-model** (`decompose_errors=True`) | `p = 1e-3` (single pinned point) | Stim (`prepare.py`), `STIM_SEED=20260708`, 100k shots | `results/exp1/p1_mwpm_baseline.csv` |
+| **A. Surface (circuit-level)** | rotated surface code, `d = 5,7,9,11` | MWPM (`pymatching`) | **Circuit-level** depolarizing: `after_clifford_depolarization`, `before_measure_flip`, `after_reset_flip`, `before_round_data_depolarization`, all `= p`, over `ROUNDS = 25` rounds; decoded on the Stim **detector-error-model** (`decompose_errors=True`) | frozen set: `p = 1e-3`; fixed-sample runs: `p in {1,2,3,5} x 1e-3` | frozen: Stim (`prepare.py`), `STIM_SEED=20260708`, 100k shots; fixed-sample: `code/v3/` | `results/exp1/p1_mwpm_baseline.csv`, `results/v3/fixed_sample_runs.csv` |
 | **B. BB (code-capacity)** | bivariate-bicycle `[[72,12,6]]`, `[[144,12,12]]` | BP-OSD (`ldpc`) | **Code-capacity**: single shot, i.i.d. X error `~Bernoulli(p)` on data qubits, **perfect** syndrome measurement, no time dimension | `p in {0.02,0.04,0.06,0.08}` | `prepare_qldpc.py`, `SEED=20260708`, 50k shots | `results/exp3/p1_qldpc_bposd.csv` |
-| **C. BB (phenomenological)** | `[[72,12,6]]` reported (the code also supports `[[144,12,12]]`; no results reported) | BP-OSD over space-time `H_st` (`ldpc`) | **Phenomenological**: `T=d` noisy rounds, data-error rate `p`/round **and** measurement-flip rate `q=p`/round, + 1 final perfect readout; decode the `(T+1)*m` detector history | `p = q in {0.02,...,0.08}`, `T = 6` (reported; 2,000 shots per point) | `prepare_qldpc_phenom.py`, `SEED=20260709` | `results/exp3/p1_qldpc_phenom.csv` |
+| **C. BB (phenomenological)** | `[[72,12,6]]` (`T = 6`); `[[144,12,12]]` (`T = 12`, fixed-sample runs only) | BP-OSD over space-time `H_st` (`ldpc`) | **Phenomenological**: `T=d` noisy rounds, data-error rate `p`/round **and** measurement-flip rate `q=p`/round, + 1 final perfect readout; decode the `(T+1)*m` detector history | frozen set: `[[72,12,6]]`, `p = q in {0.02,...,0.08}`, 2,000 shots per point; fixed-sample runs: `[[72,12,6]]` at `p in {0.002,...,0.02}`, `[[144,12,12]]` at `p in {0.005, 0.01, 0.02}` | frozen: `prepare_qldpc_phenom.py`, `SEED=20260709`; fixed-sample: `code/v3/` | `results/exp3/p1_qldpc_phenom.csv`, `results/v3/fixed_sample_runs.csv` |
 
 ---
 
@@ -27,8 +27,8 @@ point-for-point across arms.
    data-qubit flip with **noiseless** readout and no time. Arm C's `p` is a *phenomenological*
    per-round data flip **plus** an independent per-round measurement flip `q`. **The same
    numeric `p` means three different physical things.** A code-capacity `p=0.02` is far more
-   benign than a circuit-level `p=0.02` would be, and Arm A is only ever evaluated at
-   `p=1e-3`. Plotting or ranking LERs across arms on a shared `p` axis is meaningless.
+   benign than a circuit-level `p=0.02` would be, and Arm A is only evaluated at
+   `p <= 5e-3`. Plotting or ranking LERs across arms on a shared `p` axis is meaningless.
 
 2. **Different information reaching the decoder.** Arm A/C decoders reason over a
    **space-time** detector graph (time-correlated syndromes); Arm B decoders see a **single**
@@ -59,12 +59,12 @@ point-for-point across arms.
 - **"Cross-family transfer" must be per-arm.** A surface <-> BB transfer claim is legitimate
   **only** as: train once, then evaluate **separately** on each family's own arm against that
   arm's own baseline. A single aggregate "cross-family LER" is not a valid quantity.
-- **Latency comparisons must use the same measurement mode.** Online per-shot latency
-  (`p1_latency.py`) vs online; batch throughput vs batch. Never compare a GPU batch-throughput
+- **Latency comparisons must use the same measurement mode.** Single-frame call latency
+  (`latency()` in `code/harness.py`, `code/v3/latency_session.py`) vs the same; batch throughput vs batch. Never compare a GPU batch-throughput
   number to a CPU online-latency number (see the latency note).
 - **Circuit-level BB is a missing arm.** There is currently **no** circuit-level BB arm
   (Stim BB syndrome-extraction circuit + DEM + BP-OSD). Until it exists, the surface
-  circuit-level result (Arm A) cannot stand in for "circuit-level qLDPC", and the honest
+  circuit-level result (Arm A) cannot stand in for "circuit-level qLDPC", and the correct
   framing is: surface = circuit-level, BB = code-capacity/phenomenological. This is the
   single biggest apples-to-oranges risk in the paper and must be stated explicitly.
 
@@ -76,5 +76,8 @@ point-for-point across arms.
   labelled with its noise model.
 - Put the **noise model in every caption** ("circuit-level, `p=1e-3`, 25 rounds" vs
   "code-capacity, single-shot" vs "phenomenological, `T=d`, `q=p`").
-- Report every LER with its exact binomial CI (`p1_intervals.py`) and its failure count; flag
-  under-resolved points (e.g. bb144 code-capacity `p=0.02`: 2/50000) as bounds, not values.
+- Report every LER with its exact binomial CI (`p1_intervals.py`) and its failure count. Flag
+  points with fewer than 30 failures as low-count (e.g. bb144 code-capacity `p=0.02`: 2/50000) and
+  report them as estimates with their intervals; report a zero-failure point by its interval's upper end.
+- Compare two decoders scored on the same shots with the paired test (`compare()` in `code/harness.py`),
+  not by whether their marginal intervals overlap.

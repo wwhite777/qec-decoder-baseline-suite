@@ -40,7 +40,7 @@ source: results/exp3/p1_qldpc_phenom.csv
 wrote augmented CSV -> results/exp3/p1_qldpc_phenom_ci.csv
 
 ############################################################################################
-RARE-EVENT SPOTLIGHT (the under-resolved bb144 point)
+RARE-EVENT SPOTLIGHT (the low-count bb144 point)
 ############################################################################################
 Code [[144,12,12]] (gross code), code-capacity, p = 0.02:
     observed failures      = 2
@@ -51,22 +51,24 @@ Code [[144,12,12]] (gross code), code-capacity, p = 0.02:
     interval width         = 1.3964e-04  ( 349% of the point estimate )
 
 INTERPRETATION / CLAIMS THIS CI CANNOT SUPPORT:
-  * With only 2 logical failures the point LER 4.0000e-05 is essentially un-resolved: the true LER could plausibly be anywhere in
+  * With only 2 logical failures the point LER 4.0000e-05 is poorly resolved: the true LER could plausibly be anywhere in
     [4.8442e-06, 1.4449e-04] at 95% confidence. This is roughly a factor of 30 between the interval endpoints.
   * Any statement of the form "the [[144,12,12]] LER at p=0.02 is X" to more than ~1 significant figure is NOT supported.
-  * Any decoder-vs-decoder comparison AT THIS POINT (e.g. 'neural beats/matches BP-OSD at p=0.02 on the gross code') is
-    UNSUPPORTED unless the competing method's CI is disjoint from this one — a gap far larger than 1.3964e-04 would be needed.
-  * A sub-threshold / distance-scaling claim (bb144 LER << bb72 LER at p=0.02) is directionally consistent with the point
-    estimates, but the bb144 CI upper bound must be quoted alongside it; the SEPARATION should be stated as a bound, not a ratio of point estimates.
-  * FIX: to resolve this point one needs O(10^6-10^7) shots (rule of thumb: >=~100 logical failures for a ~10% relative standard error; the 95% CI then spans about -19%/+22%),
-    OR report it explicitly as an upper bound (LER < CP_hi at 95%) rather than a point value.
+  * Comparing two decoders at this point needs a paired test on the same shots (exact McNemar on the
+    discordant shots; see code/harness.py). A claim that two decoders match needs a stated equivalence
+    margin. Overlap or non-overlap of marginal intervals is not the criterion.
+  * Independently sampled codes (bb144 vs bb72 at p=0.02) are compared descriptively with both intervals;
+    state both estimates with their intervals, not a bare ratio of point estimates.
+  * About 100 failures (a ~10% relative standard error; the 95% CI then spans about -19%/+22%) need a few
+    million shots at this rate (a fixed-sample run with 3,000,000 shots is in results/v3/). Until then,
+    report the estimate with its interval and flag it as low-count.
 
 ============================================================================================
 LOW-COUNT FLAGS (points with < 30 logical failures -> CI too wide for fine claims)
 ============================================================================================
-  [surface / MWPM / circuit-level Stim noise]  7 (p/d=7): 6 fails / 100000 shots -> 95% CI [2.2019e-05, 1.3059e-04]  (point 6.0000e-05) -- UNDER-RESOLVED, quote as bound
-  [surface / MWPM / circuit-level Stim noise]  9 (p/d=9): 3 fails / 100000 shots -> 95% CI [6.1868e-06, 8.7670e-05]  (point 3.0000e-05) -- UNDER-RESOLVED, quote as bound
-  [surface / MWPM / circuit-level Stim noise]  11 (p/d=11): 0 fails / 100000 shots -> 95% CI [0.0000e+00, 3.6888e-05]  (point 0.0000e+00) -- UNDER-RESOLVED, quote as bound
-  [BB / BP-OSD / code-capacity noise]  [[144,12,12]] (p/d=0.02): 2 fails / 50000 shots -> 95% CI [4.8442e-06, 1.4449e-04]  (point 4.0000e-05) -- UNDER-RESOLVED, quote as bound
+  [surface / MWPM / circuit-level Stim noise]  7 (p/d=7): 6 fails / 100000 shots -> 95% CI [2.2019e-05, 1.3059e-04]  (point 6.0000e-05) -- LOW COUNT: report the estimate with its interval
+  [surface / MWPM / circuit-level Stim noise]  9 (p/d=9): 3 fails / 100000 shots -> 95% CI [6.1868e-06, 8.7670e-05]  (point 3.0000e-05) -- LOW COUNT: report the estimate with its interval
+  [surface / MWPM / circuit-level Stim noise]  11 (p/d=11): 0 fails / 100000 shots -> 95% CI [0.0000e+00, 3.6888e-05]  (point 0.0000e+00) -- NO FAILURES: report the interval's upper end
+  [BB / BP-OSD / code-capacity noise]  [[144,12,12]] (p/d=0.02): 2 fails / 50000 shots -> 95% CI [4.8442e-06, 1.4449e-04]  (point 4.0000e-05) -- LOW COUNT: report the estimate with its interval
 
 Rule of thumb used: >=30 failures for a moderately-tight CI; >=~100 for a ~10% relative standard error (95% CI about -19%/+22%).

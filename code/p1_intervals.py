@@ -114,7 +114,7 @@ def main():
 
     # --- explicit spotlight on the rare-event [[144,12,12]] p=0.02 point --------------
     out_lines.append("#" * 92 + "\n")
-    out_lines.append("RARE-EVENT SPOTLIGHT (the under-resolved bb144 point)\n")
+    out_lines.append("RARE-EVENT SPOTLIGHT (the low-count bb144 point)\n")
     out_lines.append("#" * 92 + "\n")
     bb144 = os.path.join(EXP3, "p1_qldpc_bposd.csv")
     if os.path.exists(bb144):
@@ -139,26 +139,22 @@ def main():
                 f"( {(hi-lo)/pt*100:.0f}% of the point estimate )\n\n")
             out_lines.append(
                 "INTERPRETATION / CLAIMS THIS CI CANNOT SUPPORT:\n"
-                f"  * With only {fails} logical failures the point LER {fmt(pt)} is essentially "
-                "un-resolved: the true LER could plausibly be anywhere in\n"
+                f"  * With only {fails} logical failures the point LER {fmt(pt)} is poorly "
+                "resolved: the true LER could plausibly be anywhere in\n"
                 f"    [{fmt(lo)}, {fmt(hi)}] at 95% confidence. This is roughly a factor of "
                 f"{hi/lo:.0f} between the interval endpoints.\n"
                 "  * Any statement of the form \"the [[144,12,12]] LER at p=0.02 is X\" to more "
                 "than ~1 significant figure is NOT supported.\n"
-                "  * Any decoder-vs-decoder comparison AT THIS POINT (e.g. 'neural beats/matches "
-                "BP-OSD at p=0.02 on the gross code') is\n"
-                "    UNSUPPORTED unless the competing method's CI is disjoint from this one — a "
-                f"gap far larger than {fmt(hi-lo)} would be needed.\n"
-                "  * A sub-threshold / distance-scaling claim (bb144 LER << bb72 LER at p=0.02) is "
-                "directionally consistent with the point\n"
-                "    estimates, but the bb144 CI upper bound must be quoted alongside it; the "
-                "SEPARATION should be stated as a bound, not a ratio of point estimates.\n"
-                "  * FIX: to resolve this point one needs O(10^6-10^7) shots (rule of thumb: "
-                ">=~100 logical failures for a ~10% relative standard error; the 95% CI then spans about -19%/+22%),\n"
-                "    OR report it explicitly as an upper bound (LER < CP_hi at 95%) rather than a "
-                "point value.\n\n")
+                "  * Comparing two decoders at this point needs a paired test on the same shots (exact McNemar on the\n"
+                "    discordant shots; see code/harness.py). A claim that two decoders match needs a stated equivalence\n"
+                "    margin. Overlap or non-overlap of marginal intervals is not the criterion.\n"
+                "  * Independently sampled codes (bb144 vs bb72 at p=0.02) are compared descriptively with both intervals;\n"
+                "    state both estimates with their intervals, not a bare ratio of point estimates.\n"
+                "  * About 100 failures (a ~10% relative standard error; the 95% CI then spans about -19%/+22%) need a few\n"
+                "    million shots at this rate (a fixed-sample run with 3,000,000 shots is in results/v3/). Until then,\n"
+                "    report the estimate with its interval and flag it as low-count.\n\n")
 
-    # --- general flags: any point with < 30 failures is under-resolved -----------------
+    # --- general flags: any point with < 30 failures is low-count -----------------------
     out_lines.append("=" * 92 + "\n")
     out_lines.append("LOW-COUNT FLAGS (points with < 30 logical failures -> CI too wide for fine claims)\n")
     out_lines.append("=" * 92 + "\n")
@@ -180,7 +176,9 @@ def main():
                 out_lines.append(
                     f"  [{label}]  {idv} (p/d={pv}): {fails} fails / {shots} shots -> "
                     f"95% CI [{fmt(lo)}, {fmt(hi)}]  "
-                    f"(point {fmt(fails/shots) if shots else 'NA'}) -- UNDER-RESOLVED, quote as bound\n")
+                    f"(point {fmt(fails/shots) if shots else 'NA'}) -- "
+                    + ("NO FAILURES: report the interval's upper end\n" if fails == 0
+                       else "LOW COUNT: report the estimate with its interval\n"))
     if not any_flag:
         out_lines.append("  (none)\n")
     out_lines.append("\nRule of thumb used: >=30 failures for a moderately-tight CI; "

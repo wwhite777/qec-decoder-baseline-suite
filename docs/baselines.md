@@ -14,4 +14,4 @@
 Only the first three rows are *reference decoders* in this artifact: MWPM is the Arm-A
 reference, BP-OSD is the Arm-B/C reference, and Stim is the data generator, not a decoder.
 The learned decoders are listed as literature reference points; none of them is
-re-implemented or claimed here (see `p1_neural_gap.md`).
+re-implemented or claimed here (see `p1_neural_controls.md`).

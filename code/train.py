@@ -5,7 +5,7 @@ This is NOT a competitive decoder and is not presented as one. It reads the dete
 bits as a bare vector (no Tanner/detector-graph structure), predicts the logical
 observable flip, and also emits a calibrated probability. It loses to MWPM by ~2 orders
 of magnitude, which is the point: it measures what a structure-free model does under a
-small fixed budget. See docs/p1_neural_gap.md.
+small fixed budget. See docs/p1_neural_controls.md.
 
 Contract: prints 'logical_error_rate: <f>', 'decode_latency_us: <f>', 'ece: <f>',
           'brier: <f>', 'peak_vram_mb: <f>'.
@@ -115,8 +115,7 @@ def main():
     print(f"train_steps:        {step}")
     print(f"val_shots:          {len(yv)}")
     print(f"mwpm_ref_ler:       {mwpm['logical_error_rate']:.8f}  (d={DISTANCE})")
-    print(f"note: naive MLP baseline; on SURFACE codes MWPM is a strong reference, so a neural edge "
-          f"must come from qLDPC/color + calibration, not surface accuracy.")
+    print(f"note: naive MLP baseline (negative control); MWPM is the surface-code reference.")
 
     # log an honest row alongside the MWPM baseline row
     import os

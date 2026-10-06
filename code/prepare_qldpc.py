@@ -8,8 +8,8 @@ compared against BP-OSD; **circuit-level noise (Stim + a detector-error-model ov
 syndrome-extraction rounds) is the explicit next step** and is intentionally NOT modelled
 here (see NOTE below).
 
-Why BB / qLDPC: on surface codes MWPM is a strong graphlike reference (prepare.py + baseline_mwpm.py),
-so the neural edge must come from a code family where MWPM does not apply. BB codes are
+Why BB / qLDPC: on surface codes MWPM is a strong graphlike reference (prepare.py + baseline_mwpm.py);
+BB codes add a code family where MWPM does not apply directly and BP-OSD is the reference. BB codes are
 the leading low-overhead qLDPC memory (Bravyi et al., "High-threshold and low-overhead
 fault-tolerant quantum memory", Nature 627 (2024); arXiv:2308.07915). The classical
 reference decoder here is **BP-OSD** (Panteleev & Kalachev; Roffe et al., `ldpc` package).

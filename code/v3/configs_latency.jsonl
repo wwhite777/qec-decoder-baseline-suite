@@ -1,0 +1,9 @@
+{"id": "L_A_d7_p0.001", "arm": "A", "d": 7, "p": 0.001}
+{"id": "L_A_d11_p0.001", "arm": "A", "d": 11, "p": 0.001}
+{"id": "L_B_bb72_p0.02", "arm": "B", "code": "bb72", "p": 0.02}
+{"id": "L_B_bb144_p0.02", "arm": "B", "code": "bb144", "p": 0.02}
+{"id": "L_C_bb72_T6_p0.02", "arm": "C", "code": "bb72", "T": 6, "p": 0.02}
+{"id": "L_C_bb72_T6_p0.005", "arm": "C", "code": "bb72", "T": 6, "p": 0.005}
+{"id": "L_C_bb72_T6_p0.02_osd0", "arm": "C", "code": "bb72", "T": 6, "p": 0.02, "decoder": "osd0"}
+{"id": "L_C_bb72_T6_p0.02_bp", "arm": "C", "code": "bb72", "T": 6, "p": 0.02, "decoder": "bp"}
+{"id": "L_C_bb144_T12_p0.01", "arm": "C", "code": "bb144", "T": 12, "p": 0.01}
