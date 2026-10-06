@@ -27,8 +27,9 @@ def arrow(ax, x0, y0, x1, y1):
 
 
 def build():
-    fig = plt.figure(figsize=(5.5, 3.05))
-    ax = fig.add_axes([0, 0, 1, 1]); ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis("off")
+    # the lowest drawn element is the Arm C row (y >= 0.134); the canvas starts at y = 0.11 (same inches per unit as before)
+    fig = plt.figure(figsize=(5.5, 2.72))
+    ax = fig.add_axes([0, 0, 1, 1]); ax.set_xlim(0, 1); ax.set_ylim(0.11, 1); ax.axis("off")
     FS = 6.0
     # top row: the decoding task as a prediction problem
     ax.text(0.012, 0.965, "The decoding task", fontsize=7.0, weight="bold", color=INK, va="center")
@@ -72,8 +73,6 @@ def build():
         for x, t in zip(cols[1:], (code, noise, inp, dec)):
             ax.text(x + 0.004, yy, t, fontsize=FS, color=INK, va="center", linespacing=1.15)
         yy -= 0.122
-    ax.text(0.5, 0.03, "Protocol: failure count and exact interval for every LER  \u00b7  paired McNemar test on the same shots  "
-            "\u00b7  single-frame call latency", ha="center", fontsize=FS, color=GREY, va="bottom")
     return fig
 
 
