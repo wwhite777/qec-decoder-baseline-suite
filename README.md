@@ -242,6 +242,7 @@ python code/v3/driver.py code/v3/configs_fixed_sample.jsonl runs/main 16
 for s in 1 2 3 4 5; do python code/v3/latency_session.py $s code/v3/configs_latency.jsonl runs/latency 0; done
 python code/v3/export_v3_results.py runs results/v3   # CSVs, failure vectors, paired tests, SHA256SUMS
 (cd results/v3 && sha256sum -c SHA256SUMS)             # check the shipped results against their checksums
+python code/v3/make_tables.py                          # every results table of the paper, from results/
 
 python code/plot_fig2.py                # Figure 2 from results/ (PDF + PNG)
 python code/make_fig1.py                # Figure 1
@@ -269,7 +270,7 @@ shots) are a different configuration from the frozen set.
 | path | contents |
 |---|---|
 | `code/harness.py`, `code/compare.py` | the evaluation harness (scoring, paired test, single-frame latency) and the paired-test command |
-| `code/v3/` | fixed-sample runs, latency sessions, paired tests and the export to `results/v3/`, with the frozen configuration files |
+| `code/v3/` | fixed-sample runs, latency sessions, paired tests, the export to `results/v3/` and the results tables, with the frozen configuration files |
 | `code/prepare*.py` | data generation: Stim surface circuits, BB code construction, the space-time check matrix |
 | `code/baseline_*.py`, `code/p1_intervals.py`, `code/p1_latency.py` | the original study's reference runs, intervals and latency |
 | `code/verify_redecode.py` | re-decodes the frozen sets and recomputes all 16 failure counts and intervals |

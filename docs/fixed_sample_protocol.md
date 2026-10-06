@@ -76,6 +76,7 @@ and are not reported.
 | `code/v3/latency_session.py` | one latency session |
 | `code/v3/paired_tests.py` | the six paired tests from the failure vectors, with Holm's adjustment |
 | `code/v3/export_v3_results.py` | collects run and session outputs into `results/v3/` with `SHA256SUMS` |
+| `code/v3/make_tables.py` | writes every results table of the paper from `results/` (added after the runs; it reads results only) |
 
 These copies differ from the ones that produced `results/v3/` only in path handling: the default repository root, and
 the interpreter the driver calls. Two configurations re-run from these copies (`A_d5_p0.005` and
