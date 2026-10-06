@@ -171,7 +171,8 @@ def main():
         "This is ONLINE latency. It is NOT the same as the batch-amortized us/round reported\n"
         "in the baseline CSVs (those time a whole vectorized batch and divide by shots*rounds).\n"
         "Batch throughput amortizes per-call overhead and reuses warm caches; the online tail\n"
-        "(p95/p99) is what a real-time decoder must meet to keep up with the syndrome stream.\n")
+        "(p95/p99) characterizes the risk of missing a per-frame deadline; keeping up with the\n"
+        "syndrome stream also depends on the arrival rate, buffering and parallelism.\n")
     lines.append("=" * 100 + "\n")
     hdr = (f"{'decoder':>16} {'family':>7} {'noise':>22} {'median':>9} {'p50':>9} "
            f"{'p95':>9} {'p99':>9} {'max':>9}   unit\n")
@@ -192,9 +193,9 @@ def main():
         "    on hard syndromes -> heavy right tail (p99 >> median), the key online-latency risk.\n\n"
         "CAVEATS (be honest):\n"
         "  * All timings are single-threaded Python-level wall-clock on a shared CPU; absolute\n"
-        "    values carry interpreter + scheduler overhead and are an UPPER bound on a tuned\n"
-        "    C++/FPGA deployment. The DISTRIBUTION SHAPE (median vs tail) is the transferable\n"
-        "    finding, not the absolute microseconds.\n"
+        "    values carry interpreter + scheduler overhead and describe THIS implementation in\n"
+        "    this environment; an optimized C++/FPGA deployment must be measured under matched\n"
+        "    settings (its absolute times and its tail shape may both differ).\n"
         "  * pymatching.decode / ldpc.decode still cross the Python<->C++ boundary once per call;\n"
         "    a native streaming implementation would remove that fixed overhead uniformly.\n"
         "  * This measures the classical reference decoders only. A neural decoder's online\n"

@@ -1,5 +1,10 @@
 # P1 — Honest Assessment of the Neural QEC Baselines (the "strawman" gap)
 
+> Status: a scoping note written in July 2026. Its effort figures are rough estimates and its
+> causal statements are hypotheses (no ablations were run). Since then, Blue et al.
+> (*Quantum* 10, 2149, 2026) reported a transformer decoder that beats BP-OSD on `[[72,12,6]]`
+> under circuit-level noise.
+
 **Verdict.** The neural decoders in this repository are **strawmen**. They lose to the classical references by wide margins in logical
 error rate (about two orders of magnitude for the MLP, about 6x for the mixer), and no honest paper can present them as competitive
 decoders. This document (a) states exactly how far off they are, (b) explains *why* they are
@@ -35,16 +40,18 @@ do not decode these codes** — not to bury them or re-label them as wins.
 
 ---
 
-## 2. Why the current models are strawmen (root causes)
+## 2. Possible causes (hypotheses; no ablations were run)
 
-The weakness is structural, not bad luck:
+Each control is a single run, so the causes below are hypotheses. Testing them needs
+seed-repeated ablations of the input representation, the target and the training budget.
 
 1. **No code structure in the model.** Both models ingest the syndrome as a bare bit vector
    (`bit_embed + pos_embed`, mean-pool, linear head). They are given **none** of the
    Tanner-graph / parity-check adjacency `H_Z`, no qubit<->check incidence, no code geometry.
    Competitive neural decoders are **graph/geometry-conditioned** (they run message passing
-   on the code's Tanner graph or feed the model the stabiliser structure). A permutation-blind
-   MLP/mixer has to memorize an exponentially large syndrome->coset map from 300 s of data.
+   on the code's Tanner graph or feed the model the stabiliser structure). The mixer sees the
+   syndrome bits in a fixed order with learned positional embeddings, but it has to learn the
+   syndrome-to-logical map without any code structure, from minutes of training.
 2. **Wrong output target for BB.** The DeltaNet head predicts the `k`-bit **logical-flip
    vector** `L_Z e` directly and is scored as all-or-nothing over 12 bits. That is a very
    high-variance target; BP-OSD instead solves for a **physical coset representative** `ê` and
@@ -89,12 +96,12 @@ engineer.
 - **What "competitive" means here.** Match MWPM's LER at `d=7,9,11` and ideally beat it at
   larger `d` (the published AlphaQubit result). Report per-round LER with CIs, and **online**
   latency the same way as `code/p1_latency.py`.
-- **Effort:** **large.** ~2-4 engineer-weeks for a faithful re-implementation and training
-  run, plus GPU-days. This is a research artifact, not a script.
+- **Effort (rough estimate, not measured):** large, roughly weeks of engineering plus GPU-days
+  for a faithful re-implementation and training run.
 
 ### 3b. BB/qLDPC arms (Arms B/C) — the honest hard case
 Two realistic routes, both nontrivial:
-- **(i) Ambiguity Clustering (AC)** — the current SOTA *fast, accurate* qLDPC decoder
+- **(i) Ambiguity Clustering (AC)** — a recent *fast, accurate* qLDPC decoder
   (Wolanski & Barber / Riverlane, arXiv:2406.14527-class). It is a BP + clustering method,
   **not** a neural net, but it is the correct "strong fast baseline" the paper should compare
   against instead of (or alongside) a neural model. Reimplementing AC faithfully is **medium**
@@ -102,10 +109,10 @@ Two realistic routes, both nontrivial:
 - **(ii) A graph/message-passing neural decoder** matched to the Tanner graph — e.g. a MPNN
   over the BB Tanner graph (Maan-Paler-style, *npj QI* 11:78 2025) or the BB-specific ML
   decoder of Blue et al. (arXiv:2504.13043), and for Arm C a **spatiotemporal** GNN over the
-  space-time `H_st` graph. This is the only neural family with a real chance of matching
-  BP-OSD on BB codes, precisely because it is code-structure-aware. **Large** effort
+  space-time `H_st` graph. This is a natural neural family to try, because it is
+  code-structure-aware. **Large** effort
   (~3-4 engineer-weeks incl. getting it to actually match BP-OSD, which is not guaranteed).
-- **Reality check.** Beating BP-OSD on BB code-capacity LER is **hard and may not happen**;
+- **Reality check.** Whether a learned decoder can beat BP-OSD on BB code-capacity LER is open;
   the honest headline for a neural qLDPC decoder is usually a **latency/throughput** or
   **calibration** win at matched LER, not an accuracy win. The paper should be scoped so the
   contribution survives a *tie* on LER (Pareto: LER-matched but faster/better-calibrated).
@@ -121,13 +128,13 @@ Two realistic routes, both nontrivial:
 2. **Add at least one strong non-trivial baseline** before any neural-vs-classical claim: on
    BB, that is **Ambiguity Clustering** (medium effort) as the fast reference beyond BP-OSD.
 3. **If a neural decoder is to be a headline**, budget the AlphaQubit-style (surface) and/or
-   Tanner-graph MPNN (BB) build honestly (weeks + GPU-days, no 300 s cap), and pre-register
-   that the likely win is **latency/calibration at matched LER**, not raw LER.
+   Tanner-graph MPNN (BB) build honestly (rough estimate: weeks + GPU-days, no 300 s cap), and
+   pre-register the target (LER, latency or calibration) before running.
 4. **Every comparison stays per-arm** (see `docs/p1_arms.md`) and every LER carries its
    binomial CI (see `code/p1_intervals.py`), so a neural "win" cannot hide inside an unresolved rare-event
    point.
 
 **Bottom line:** the classical baselines (MWPM, BP-OSD code-capacity + phenomenological) are
 sound and now properly quantified (CIs + online latency). The neural side is currently a
-strawman; making it competitive is a **weeks-scale, GPU-days research effort**, not a tweak,
+strawman; making it competitive would likely take weeks of work and GPU-days (rough estimate),
 and this document is the honest scoping of that gap rather than a fake fix.

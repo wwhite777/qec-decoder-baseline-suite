@@ -58,7 +58,7 @@ INTERPRETATION / CLAIMS THIS CI CANNOT SUPPORT:
     UNSUPPORTED unless the competing method's CI is disjoint from this one — a gap far larger than 1.3964e-04 would be needed.
   * A sub-threshold / distance-scaling claim (bb144 LER << bb72 LER at p=0.02) is directionally consistent with the point
     estimates, but the bb144 CI upper bound must be quoted alongside it; the SEPARATION should be stated as a bound, not a ratio of point estimates.
-  * FIX: to resolve this point one needs O(10^6-10^7) shots (rule of thumb: >=~100 logical failures for a ~10%-wide CI),
+  * FIX: to resolve this point one needs O(10^6-10^7) shots (rule of thumb: >=~100 logical failures for a ~10% relative standard error; the 95% CI then spans about -19%/+22%),
     OR report it explicitly as an upper bound (LER < CP_hi at 95%) rather than a point value.
 
 ============================================================================================
@@ -69,4 +69,4 @@ LOW-COUNT FLAGS (points with < 30 logical failures -> CI too wide for fine claim
   [surface / MWPM / circuit-level Stim noise]  11 (p/d=11): 0 fails / 100000 shots -> 95% CI [0.0000e+00, 3.6888e-05]  (point 0.0000e+00) -- UNDER-RESOLVED, quote as bound
   [BB / BP-OSD / code-capacity noise]  [[144,12,12]] (p/d=0.02): 2 fails / 50000 shots -> 95% CI [4.8442e-06, 1.4449e-04]  (point 4.0000e-05) -- UNDER-RESOLVED, quote as bound
 
-Rule of thumb used: >=30 failures for a moderately-tight CI; >=~100 for ~+/-10% relative.
+Rule of thumb used: >=30 failures for a moderately-tight CI; >=~100 for a ~10% relative standard error (95% CI about -19%/+22%).

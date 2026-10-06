@@ -27,9 +27,8 @@ habits make that comparison look more decisive than it is:
    binomial interval is `[2.2e-5, 1.31e-4]` — a factor of six wide. Beating `6e-5`
    is not the same as beating that interval.
 2. **Latency is reported as batch throughput.** Batch decoding amortises per-call
-   overhead and keeps caches warm. A real-time decoder must keep up with the syndrome
-   stream *one frame at a time*, and the online tail can be twenty-six times the
-   median.
+   overhead and keeps caches warm. A real-time decoder receives the syndrome stream
+   *one frame at a time*, and the online tail can be twenty-six times the median.
 3. **Logical error rates from different noise models get plotted on one axis.**
    A code-capacity `p = 0.02`, a phenomenological `p = q = 0.02`, and a circuit-level
    `p = 0.02` are three different physical claims. The numeral is shared; nothing
@@ -45,10 +44,11 @@ The separation **is** the contribution. These are never merged onto a shared axi
 |---|---|---|---|---|
 | **A** | rotated surface, `d = 5,7,9,11` | MWPM (`pymatching`) on the Stim detector-error model | circuit-level depolarizing, 25 rounds, `p = 1e-3` | 100,000 |
 | **B** | bivariate-bicycle `[[72,12,6]]`, `[[144,12,12]]` | BP-OSD (`ldpc`) | code-capacity, perfect single-shot syndrome | 50,000 |
-| **C** | `[[72,12,6]]` only (the `[[144,12,12]]`, `T = 12` run did not complete) | BP-OSD over the space-time `H_st` | phenomenological, `T = 6` noisy rounds, `q = p` | 2,000 |
+| **C** | `[[72,12,6]]` only (no `[[144,12,12]]` results reported) | BP-OSD over the space-time `H_st` | phenomenological, `T = 6` noisy rounds, `q = p` | 2,000 |
 
-MWPM is near-optimal on the surface code *because* its detector graph is almost a
-matching graph; it is undefined on BB codes. There is no single classical baseline
+MWPM is the standard strong graphlike reference for the surface code (its detector error
+model decomposes into graphlike edges); it cannot be applied directly to the BB check
+matrices, where each qubit is in three checks. There is no single classical baseline
 spanning the arms — each arm has its own bar. See [`docs/p1_arms.md`](docs/p1_arms.md)
 for the four reasons the arms cannot be pooled and the rules any cross-family claim
 must follow.
@@ -60,25 +60,29 @@ intervals on every point:
 
 | `d` | failures / shots | LER | 95% interval | status |
 |---|---|---|---|---|
-| 5 | 78 / 100,000 | 7.80e-4 | [6.17e-4, 9.73e-4] | resolved (±46%) |
-| 7 | 6 / 100,000 | 6.00e-5 | [2.20e-5, 1.31e-4] | **under-resolved** |
-| 9 | 3 / 100,000 | 3.00e-5 | [6.19e-6, 8.77e-5] | **under-resolved** |
-| 11 | 0 / 100,000 | — | [0, 3.69e-5] | **upper bound only** |
+| 5 | 78 / 100,000 | 7.80e-4 | [6.17e-4, 9.73e-4] | resolved (−21% / +25%) |
+| 7 | 6 / 100,000 | <= 1.31e-4 | [2.20e-5, 1.31e-4] | **under-resolved** |
+| 9 | 3 / 100,000 | <= 8.77e-5 | [6.19e-6, 8.77e-5] | **under-resolved** |
+| 11 | 0 / 100,000 | <= 3.69e-5 | [0, 3.69e-5] | **no failures** |
 
-Only `d = 5` is a measurement. `d = 11` is reported as `LER <= 3.69e-5` and never as a
-point, because zero events is not an error rate.
+Only `d = 5` is a resolved measurement. Points with fewer than 30 failures are reported by
+their 95% upper limit; `d = 11` (zero failures) supports only `LER <= 3.69e-5`.
 
 **Arm B — BP-OSD, BB codes, code-capacity.** The rare-event point is the instructive
 one: `[[144,12,12]]` at `p = 0.02` saw **2 failures in 50,000 shots**. The interval is
-`[4.84e-6, 1.44e-4]` — the endpoints differ by a factor of ~30, about 1.5 decades. The
-point value 4.0e-5 is quoted throughout as a **bound**, not a value. Any "we match
-BP-OSD on the gross code at `p = 0.02`" claim needs a competing interval disjoint from
-that one; nothing at this shot count can supply it.
+`[4.84e-6, 1.44e-4]` — the endpoints differ by a factor of ~30, about 1.5 decades. It is
+reported as `LER <= 1.44e-4` (its 95% upper limit); the ratio 2/50,000 = 4.0e-5 is not
+resolved. A claim that another decoder *differs* from BP-OSD here needs an interval
+disjoint from this one (50 failures in 50,000 shots would give one, with a lower limit
+above 1.44e-4); a claim that it *matches* BP-OSD needs an equivalence criterion, which
+overlapping intervals alone do not provide.
 
 **Arm C — BP-OSD, `[[72,12,6]]`, phenomenological, `T = 6`.** Logical error rate rises
-from 0.0530 at `p = 0.02` to 0.4745, 0.9215 and 0.9955 at `p = 0.04/0.06/0.08`. Note
-what the same numeral does across arms: `p = 0.02` is a mild 8.78e-3 in Arm B and a
-6x worse 5.30e-2 in Arm C on the identical code.
+from 0.0530 at `p = 0.02` to 0.4745, 0.9215 and 0.9955 at `p = 0.04/0.06/0.08`, a steep
+rise for this one code and round count (no threshold is estimated). The same nominal
+`p = 0.02` means different noise in the two BB arms: Arm C adds measurement errors and six
+noisy rounds, so its LER (5.30e-2) is higher than Arm B's (8.78e-3) on the same code. That
+reflects the noise model, not a verdict about the decoder.
 
 **Online latency — the most quotable result.** Every call timed individually with
 `perf_counter`, one syndrome frame in, one correction out:
@@ -99,10 +103,12 @@ driven by the OSD fallback firing on hard syndromes. A later check
 (`code/diag_osd_convergence.py`, receipt in `results/verification_20261006/`) records whether
 belief propagation converged on each call (ldpc runs OSD only when it does not): it failed to
 converge on 139 of the 2,000 phenomenological frames, and every call in the slowest 5% was one
-of them; on the code-capacity frames it failed on only 10 (bb72) and 3 (bb144) of 3,000. A throughput number divides total
-time by shots and reports something near the median — the tail simply does not appear.
-For a decoder that has to keep up with a syndrome stream in real time, the tail is the
-specification.
+of them; on the code-capacity frames it failed on only 10 (bb72) and 3 (bb144) of 3,000. A
+throughput number divides total time by shots, which gives the mean: for the
+phenomenological decoder the mean call takes 341 us, 2.8 times its median, and the tail
+itself does not appear. Tail percentiles characterize the risk of missing a per-frame
+deadline; whether a decoder keeps up with a stream also depends on the arrival rate,
+buffering and parallelism. All times describe this Python implementation on one shared CPU.
 
 ## The negative result, stated plainly
 
@@ -111,13 +117,16 @@ competitive decoders:
 
 | Model | Arm | Learned LER | Reference LER | Gap |
 |---|---|---|---|---|
-| Code-blind MLP | A: surface `d = 5` | 8.27e-2 | MWPM 7.80e-4 | **~106x worse** |
+| Code-blind MLP | A: surface `d = 5` | 8.27e-2 | MWPM 7.0e-4 (same 20,000 shots) | **~118x worse** |
 | Code-blind DeltaNet-style mixer | B: bb72, `p = 0.04` | 0.501 † | BP-OSD 7.94e-2 | **~6x worse** † |
 
 The MLP (120 s of training on 80,000 shots of the frozen `d = 5` set) was scored on the
-remaining 20,000 shots. On those same shots MWPM fails 14 times (7.0e-4) and always predicting
-"no flip" gives 0.209, so the MLP learned something but stays about two orders of magnitude
-behind MWPM. The mixer (300 s on 200,000 freshly sampled shots) has a mean per-logical-bit
+remaining 20,000 shots. Its recorded LER corresponds to 1,653 failures (95% interval
+[7.89e-2, 8.66e-2]). On those same shots MWPM fails 14 times (7.0e-4; under-resolved, so
+`<= 1.17e-3` by the reading rule), so the intervals are disjoint and the ~118x ratio of point
+estimates is indicative; on all 100,000 shots MWPM gives 7.80e-4 (unpaired). Always
+predicting "no flip" gives 0.209, so the MLP learned something but stays about two orders of
+magnitude behind MWPM. The mixer (300 s on 200,000 freshly sampled shots) has a mean per-logical-bit
 accuracy of about 0.86 and gets the full 12-bit logical-flip vector wrong on about half of the
 shots. † That run recorded its LER (0.50105) but not the shots it was scored on; 0.50105 is not
 a multiple of 1/50,000, so it was not scored on the whole frozen set, and the ratio is
@@ -125,9 +134,9 @@ indicative only. Neither run saved weights, so neither is bit-reproducible. Both
 syndrome as a bare bit vector with no Tanner-graph or geometric structure. **This paper
 makes no competitive-decoder claim.** They are here because "a code-blind sequence
 mixer fails" is a useful floor, and because the honest thing to do with a losing model
-is publish the loss. [`docs/p1_neural_gap.md`](docs/p1_neural_gap.md) scopes what a
-genuinely competitive learned decoder would take (weeks, GPU-days, code-structured
-architectures) rather than pretending these are it.
+is publish the loss. [`docs/p1_neural_gap.md`](docs/p1_neural_gap.md) lists hypotheses for
+the gap and candidate directions (code-structured architectures, larger training budgets);
+no ablations were run, so these are hypotheses and rough estimates, not results.
 
 ## What is in this repository
 
@@ -147,13 +156,25 @@ architectures) rather than pretending these are it.
 
 ```bash
 pip install stim pymatching ldpc numpy scipy matplotlib   # tested: stim 1.16.0, pymatching 2.4.0, ldpc 2.4.1
-python code/verify_redecode.py   # re-decode the shipped arrays: all 16 failure counts, exactly
-python code/prepare.py && python code/baseline_mwpm.py     # Arm A
-python code/prepare_qldpc.py && python code/baseline_bposd.py   # Arm B
-python code/prepare_qldpc_phenom.py && python code/baseline_bposd_phenom.py   # Arm C
-python code/p1_intervals.py      # intervals over the frozen CSVs
-python code/p1_latency.py        # online latency distributions
+
+# 1. Reproduce every reported failure count and interval from the shipped arrays (CPU, ~1 min):
+python code/verify_redecode.py
+
+# 2. Re-run the reported configurations through the original scripts on the shipped arrays
+#    (the scripts read ~/.cache/ququ_p1_qec and write to results/; set P1_RESULT_DIR to keep a copy):
+mkdir -p ~/.cache/ququ_p1_qec && cp data/frozen_validation/*.npz ~/.cache/ququ_p1_qec/
+python code/baseline_mwpm.py                             # Arm A: d = 5, 7, 9, 11; 100,000 shots
+python code/baseline_bposd.py                            # Arm B: bb72 and bb144; 4 values of p; 50,000 shots
+python code/baseline_bposd_phenom.py bb72 --shots 2000   # Arm C as reported: bb72 only, T = 6, 2,000 shots
+python code/p1_intervals.py                              # exact intervals over the result CSVs
+python code/p1_latency.py                                # online latency (re-measured; varies by machine)
+python code/plot_p1_rerun.py                             # Figure 2 (PDF + PNG) from the result CSVs
 ```
+
+Without the shipped arrays, the same commands draw new validation sets from the seeds. Stim's
+seeded sampling differs across Stim versions, so the Arm A counts can then differ. The
+phenomenological script's defaults (bb72 and bb144, 20,000 shots) are a different, larger
+configuration; no bb144 phenomenological results are reported.
 
 **Data provenance.** All data is synthetic and generated by public tools. Seeds are
 pinned: Stim's sampler seed `20260708` for Arm A, NumPy seeds `20260708` for Arm B and
@@ -172,15 +193,16 @@ order 7.
 - **BB code distances (6 and 12) are literature values** from Bravyi et al. (*Nature*
   627, 2024) for these exact polynomials. They are **not** recomputed here; computing
   the true minimum-weight logical needs an ILP/GAP search we did not run.
-- **Latency is single-threaded Python wall-clock on a shared CPU.** Absolute
-  microseconds carry interpreter and scheduler overhead and are an upper bound on a
-  tuned C++/FPGA deployment. Only the **shape** of the distribution — median versus
-  tail — transfers.
+- **Latency is single-threaded Python wall-clock on one shared CPU.** The numbers and the
+  tail shape describe this implementation; an optimized C++/FPGA deployment must be
+  measured under matched settings, and both its absolute times and its tail shape may differ.
 - **The rare-event points are under-resolved by design of the shot budget**, not by
-  accident. Resolving surface `d >= 7` or bb144 at `p = 0.02` to a point estimate needs
-  1e6–1e7 shots (roughly 100 logical failures for a ~10% relative standard error; the 95% interval then still spans about −19% to +22%).
+  accident, and are reported by their 95% upper limits. For the nonzero points (surface
+  `d = 7, 9`; bb144 at `p = 0.02`), about 100 failures (a ~10% relative standard error; the
+  95% interval then still spans about −19% to +22%) would need roughly 1.7–3.3 million
+  shots. The zero-failure `d = 11` point supports only an upper limit.
 - **Arm C covers one code.** Only `[[72,12,6]]` is reported under phenomenological noise;
-  the `[[144,12,12]]` run (`T = 12`) did not complete.
+  the code supports `[[144,12,12]]` with `T = 12`, but no such results are reported.
 - **The learned decoders are negative controls only.** No comparison in this repository
   supports any claim that a neural decoder is competitive with MWPM or BP-OSD. Both are
   single runs without saved weights, and the mixer run did not record which shots it was

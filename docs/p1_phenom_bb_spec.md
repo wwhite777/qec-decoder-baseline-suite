@@ -206,7 +206,8 @@ Implemented in `prepare_qldpc_phenom._logical_failures`:
 `la = (resid @ L_Z^T) % 2; fail = any(la != 0 along the k axis)`. This is the **identical**
 criterion (same `L_Z`) as the code-capacity contract, so "did the logical qubit survive" is
 measured consistently across both BB arms. It correctly ignores stabiliser-equivalent
-residuals (a residual in `rowspace(H_Z)` commutes with all of `L_Z` and is *not* a failure).
+residuals (an X residual in `rowspace(H_X)`, i.e. a product of X stabilizers, commutes with
+all of `L_Z` and is *not* a failure; `L_Z` itself is a basis of `ker(H_X) / rowspace(H_Z)`).
 
 LER `= failures / shots`. `evaluate_ler_phenom` returns `{LER, failures, shots, p, q, T,
 code}`; the baseline additionally reports Wilson 95% lo/hi (and this rigor pass adds exact

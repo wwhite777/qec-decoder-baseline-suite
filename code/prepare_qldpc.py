@@ -8,7 +8,7 @@ compared against BP-OSD; **circuit-level noise (Stim + a detector-error-model ov
 syndrome-extraction rounds) is the explicit next step** and is intentionally NOT modelled
 here (see NOTE below).
 
-Why BB / qLDPC: on surface codes MWPM is near-optimal (prepare.py + baseline_mwpm.py),
+Why BB / qLDPC: on surface codes MWPM is a strong graphlike reference (prepare.py + baseline_mwpm.py),
 so the neural edge must come from a code family where MWPM does not apply. BB codes are
 the leading low-overhead qLDPC memory (Bravyi et al., "High-threshold and low-overhead
 fault-tolerant quantum memory", Nature 627 (2024); arXiv:2308.07915). The classical

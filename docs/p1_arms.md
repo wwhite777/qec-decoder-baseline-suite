@@ -14,7 +14,7 @@ point-for-point across arms.
 |-----|-------------|-------------------|-------------|-------------------|-------------|------------|
 | **A. Surface (circuit-level)** | rotated surface code, `d = 5,7,9,11` | MWPM (`pymatching`) | **Circuit-level** depolarizing: `after_clifford_depolarization`, `before_measure_flip`, `after_reset_flip`, `before_round_data_depolarization`, all `= p`, over `ROUNDS = 25` rounds; decoded on the Stim **detector-error-model** (`decompose_errors=True`) | `p = 1e-3` (single pinned point) | Stim (`prepare.py`), `STIM_SEED=20260708`, 100k shots | `results/exp1/p1_mwpm_baseline.csv` |
 | **B. BB (code-capacity)** | bivariate-bicycle `[[72,12,6]]`, `[[144,12,12]]` | BP-OSD (`ldpc`) | **Code-capacity**: single shot, i.i.d. X error `~Bernoulli(p)` on data qubits, **perfect** syndrome measurement, no time dimension | `p in {0.02,0.04,0.06,0.08}` | `prepare_qldpc.py`, `SEED=20260708`, 50k shots | `results/exp3/p1_qldpc_bposd.csv` |
-| **C. BB (phenomenological)** | same BB codes | BP-OSD over space-time `H_st` (`ldpc`) | **Phenomenological**: `T=d` noisy rounds, data-error rate `p`/round **and** measurement-flip rate `q=p`/round, + 1 final perfect readout; decode the `(T+1)*m` detector history | `p = q in {0.02,...,0.08}`, `T in {6,12}` | `prepare_qldpc_phenom.py`, `SEED=20260709` | `results/exp3/p1_qldpc_phenom.csv` |
+| **C. BB (phenomenological)** | `[[72,12,6]]` reported (the code also supports `[[144,12,12]]`; no results reported) | BP-OSD over space-time `H_st` (`ldpc`) | **Phenomenological**: `T=d` noisy rounds, data-error rate `p`/round **and** measurement-flip rate `q=p`/round, + 1 final perfect readout; decode the `(T+1)*m` detector history | `p = q in {0.02,...,0.08}`, `T = 6` (reported; 2,000 shots per point) | `prepare_qldpc_phenom.py`, `SEED=20260709` | `results/exp3/p1_qldpc_phenom.csv` |
 
 ---
 
@@ -34,9 +34,10 @@ point-for-point across arms.
    **space-time** detector graph (time-correlated syndromes); Arm B decoders see a **single**
    perfect syndrome (no time). The decoding *problem* — not just its difficulty — differs.
 
-3. **MWPM does not even apply to BB codes.** The surface arm's reference (MWPM) is
-   near-optimal *because* the surface code's detector graph is (almost) a matching graph.
-   BB/qLDPC detector graphs are not, so MWPM is undefined there and BP-OSD is the reference.
+3. **Graphlike matching does not apply directly to BB codes.** The surface arm's reference
+   (MWPM) is the standard strong graphlike decoder: the surface code's detector error model
+   decomposes into graphlike edges. In the BB check matrices each qubit is in three checks, so
+   matching cannot be applied to them directly, and BP-OSD is the reference.
    There is therefore **no single classical baseline** spanning the arms; each arm has its
    own bar to beat.
 

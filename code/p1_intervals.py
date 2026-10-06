@@ -154,7 +154,7 @@ def main():
                 "    estimates, but the bb144 CI upper bound must be quoted alongside it; the "
                 "SEPARATION should be stated as a bound, not a ratio of point estimates.\n"
                 "  * FIX: to resolve this point one needs O(10^6-10^7) shots (rule of thumb: "
-                ">=~100 logical failures for a ~10%-wide CI),\n"
+                ">=~100 logical failures for a ~10% relative standard error; the 95% CI then spans about -19%/+22%),\n"
                 "    OR report it explicitly as an upper bound (LER < CP_hi at 95%) rather than a "
                 "point value.\n\n")
 
@@ -184,7 +184,7 @@ def main():
     if not any_flag:
         out_lines.append("  (none)\n")
     out_lines.append("\nRule of thumb used: >=30 failures for a moderately-tight CI; "
-                     ">=~100 for ~+/-10% relative.\n")
+                     ">=~100 for a ~10% relative standard error (95% CI about -19%/+22%).\n")
 
     text = "".join(out_lines)
     summ = os.path.join(RESULT_ROOT, "p1_intervals_summary.txt")

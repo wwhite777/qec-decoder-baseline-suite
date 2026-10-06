@@ -115,7 +115,7 @@ def main():
     print(f"train_steps:        {step}")
     print(f"val_shots:          {len(yv)}")
     print(f"mwpm_ref_ler:       {mwpm['logical_error_rate']:.8f}  (d={DISTANCE})")
-    print(f"note: naive MLP baseline; on SURFACE codes MWPM is near-optimal so the neural edge "
+    print(f"note: naive MLP baseline; on SURFACE codes MWPM is a strong reference, so a neural edge "
           f"must come from qLDPC/color + calibration, not surface accuracy.")
 
     # log an honest row alongside the MWPM baseline row

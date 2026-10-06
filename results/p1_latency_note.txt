@@ -5,7 +5,8 @@ syndrome frame in, one correction out), timed one at a time with perf_counter.
 This is ONLINE latency. It is NOT the same as the batch-amortized us/round reported
 in the baseline CSVs (those time a whole vectorized batch and divide by shots*rounds).
 Batch throughput amortizes per-call overhead and reuses warm caches; the online tail
-(p95/p99) is what a real-time decoder must meet to keep up with the syndrome stream.
+(p95/p99) characterizes the risk of missing a per-frame deadline; keeping up with the
+syndrome stream also depends on the arrival rate, buffering and parallelism.
 ====================================================================================================
          decoder  family                  noise    median       p50       p95       p99       max   unit
 MWPM (pymatching) surface   circuit-level (Stim)    10.29u    10.29u    15.18u    19.54u    26.54u   per detector frame (=1 shot = 25 rounds)
@@ -26,9 +27,9 @@ READING THE NUMBERS:
 
 CAVEATS (be honest):
   * All timings are single-threaded Python-level wall-clock on a shared CPU; absolute
-    values carry interpreter + scheduler overhead and are an UPPER bound on a tuned
-    C++/FPGA deployment. The DISTRIBUTION SHAPE (median vs tail) is the transferable
-    finding, not the absolute microseconds.
+    values carry interpreter + scheduler overhead and describe THIS implementation in
+    this environment; an optimized C++/FPGA deployment must be measured under matched
+    settings (its absolute times and its tail shape may both differ).
   * pymatching.decode / ldpc.decode still cross the Python<->C++ boundary once per call;
     a native streaming implementation would remove that fixed overhead uniformly.
   * This measures the classical reference decoders only. A neural decoder's online
