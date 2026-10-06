@@ -51,9 +51,9 @@ in three checks. [`docs/p1_arms.md`](docs/p1_arms.md) gives the reasons the arms
 ## Results
 
 Two kinds of data are used, and they are never pooled:
-- **Frozen validation sets** of the original study (2026-07). These are shipped as arrays in `data/frozen_validation/`,
-  because Stim's seeded sampling is not consistent across Stim versions. Any decoder can be scored on exactly these
-  shots.
+- **Frozen validation sets** of the submitted version of the paper (2026-07). These are shipped as arrays in
+  `data/frozen_validation/`, because Stim's seeded sampling is not guaranteed to be consistent across Stim versions or
+  machines. Any decoder can be scored on exactly these shots.
 - **Fixed-sample runs** in `results/v3/`. These draw fresh shots from new seeds. The number of shots per configuration
   was fixed in a protocol frozen before any run: [`docs/fixed_sample_protocol.md`](docs/fixed_sample_protocol.md).
 
@@ -139,13 +139,13 @@ and the range across sessions. Absolute values are specific to this host and its
 |---|---|---|---|---|---|
 | A: MWPM, `d = 7`, `p = 1e-3` (25-round frame) | 11 | [11, 12] | 27 | [26, 29] |  |
 | A: MWPM, `d = 11`, `p = 1e-3` (25-round frame) | 22 | [20, 29] | 48 | [33, 58] |  |
-| B: BP-OSD, `[[72,12,6]]`, `p = 0.02` (syndrome) | 8 | [8, 11] | 30 | [22, 33] | 0.3% |
-| B: BP-OSD, `[[144,12,12]]`, `p = 0.02` (syndrome) | 20 | [16, 21] | 49 | [42, 50] | 0.1% |
-| C: BP-OSD, `[[72,12,6]]`, `p = 0.005` (6-round frame) | 71 | [69, 97] | 189 | [123, 215] | 0.0% |
+| B: BP-OSD, `[[72,12,6]]`, `p = 0.02` (syndrome) | 8 | [8, 11] | 30 | [22, 33] | 0.34% |
+| B: BP-OSD, `[[144,12,12]]`, `p = 0.02` (syndrome) | 20 | [16, 21] | 49 | [42, 50] | 0.058% |
+| C: BP-OSD, `[[72,12,6]]`, `p = 0.005` (6-round frame) | 71 | [69, 97] | 189 | [123, 215] | 0.02% |
 | C: BP-OSD, `[[72,12,6]]`, `p = 0.02` (6-round frame) | 125 | [119, 129] | 3,800 | [3,290, 4,258] | 6.7% |
 | C: BP-OSD-0, `[[72,12,6]]`, `p = 0.02` | 129 | [118, 130] | 2,077 | [1,505, 2,162] | 6.9% |
 | C: BP only, `[[72,12,6]]`, `p = 0.02` | 127 | [111, 144] | 1,852 | [1,364, 2,028] | 6.9% |
-| C: BP-OSD, `[[144,12,12]]`, `p = 0.01` (12-round frame) | 410 | [409, 411] | 3,366 | [1,763, 26,098] | 1.0% |
+| C: BP-OSD, `[[144,12,12]]`, `p = 0.01` (12-round frame) | 410 | [409, 411] | 3,366 | [1,763, 26,098] | 0.97% |
 
 - **Phenomenological `[[72,12,6]]` at `p = 0.02`.** BP failed to converge on 6.7% of frames. In every session these
   frames made up 100% of the slowest 5% of calls: a non-converged frame runs all 50 BP iterations and then OSD.
@@ -156,10 +156,10 @@ and the range across sessions. Absolute values are specific to this host and its
 - **What these numbers describe.** They are service times per frame. Whether a decoder meets a real-time deadline also
   depends on the arrival rate, buffering and parallelism.
 
-The original study's single-session timings (`results/p1_latency_note.txt`, `results/exp1/p1_latency.csv` and the
+The submitted version's single-session timings (`results/p1_latency_note.txt`, `results/exp1/p1_latency.csv` and the
 `us_per_shot` columns) are superseded by these sessions.
 
-### Frozen validation sets of the original study (2026-07)
+### Frozen validation sets of the submitted version (2026-07)
 
 These counts are re-derived exactly by `code/verify_redecode.py`. The `[[144,12,12]]`, `p = 0.02` point is superseded by
 the fixed-sample run above, but is listed as measured.
@@ -259,7 +259,7 @@ reproduced their per-shot failure vectors exactly. That is not guaranteed elsewh
 
 The shipped failure vectors and frozen arrays are the portable reference.
 
-The original study's scripts produced the frozen sets and their results:
+The submitted version's scripts produced the frozen sets and their results:
 
 ```bash
 mkdir -p ~/.cache/ququ_p1_qec && cp data/frozen_validation/*.npz ~/.cache/ququ_p1_qec/
@@ -280,15 +280,15 @@ shots) are a different configuration from the frozen set.
 | `code/harness.py`, `code/compare.py` | the evaluation harness (scoring, paired test, single-frame latency) and the paired-test command |
 | `code/v3/` | fixed-sample runs, latency sessions, paired tests, the export to `results/v3/` and the results tables, with the frozen configuration files |
 | `code/prepare*.py` | data generation: Stim surface circuits, BB code construction, the space-time check matrix |
-| `code/baseline_*.py`, `code/p1_intervals.py`, `code/p1_latency.py` | the original study's reference runs, intervals and latency |
+| `code/baseline_*.py`, `code/p1_intervals.py`, `code/p1_latency.py` | the submitted version's reference runs, intervals and latency |
 | `code/verify_redecode.py` | re-decodes the frozen sets and recomputes all 16 failure counts and intervals |
-| `code/diag_osd_convergence.py` | the original study's check of BP convergence on each call |
+| `code/diag_osd_convergence.py` | the submitted version's check of BP convergence on each call |
 | `code/train.py`, `code/neural_bposd_bonus.py` | the two neural negative controls |
 | `code/plot_fig2.py`, `code/make_fig1.py` | the two figures |
-| `data/frozen_validation/` | the 17 frozen arrays, with `SHA256SUMS` |
+| `data/frozen_validation/` | 17 frozen arrays, with `SHA256SUMS`: the 16 validation sets behind Table 6 of the paper, and `phenom_bb72_T6_p0.02_q0.02_s2100_*.npz`, the frames of the submitted version's latency measurement of the phenomenological decoder. `code/p1_latency.py` draws 2,100 frames, makes 100 untimed warm-up calls on the first 100 and then times the first 2,000; `code/diag_osd_convergence.py` re-times the same 2,000. No LER is computed from it. |
 | `data/logicals/` | the published logical-Z bases used for scoring BB-code outputs, with `SHA256SUMS` |
 | `results/v3/` | fixed-sample runs, per-shot failure vectors, paired tests, latency sessions, `SHA256SUMS` |
-| `results/exp1/`, `results/exp3/`, `results/verification_20261006/` | the original study's results, and the re-decode and convergence receipts |
+| `results/exp1/`, `results/exp3/`, `results/verification_20261006/` | the submitted version's results, and the re-decode and convergence receipts |
 | `examples/`, `tests/` | harness examples and tests |
 | `docs/` | arm separation, protocol of the fixed-sample runs, the phenomenological BB specification, the neural controls |
 
@@ -318,6 +318,8 @@ The BB codes use `A = x^3 + y + y^2` and `B = y^3 + x + x^2`, following Bravyi e
   or BP-OSD.
 
 ## Citation
+
+The paper describes release v1.0 of this repository (git tag `v1.0`).
 
 ```bibtex
 @inproceedings{jeong2026measure,

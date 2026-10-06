@@ -32,6 +32,15 @@ def sci(x, sig=2):
     return f"{q}e{e}"
 
 
+def pct2(x):
+    """A percentage with two significant digits (one half-up rounding), trailing zeros dropped: 0.02, 0.058, 0.34, 6.7."""
+    from decimal import Decimal, ROUND_HALF_UP
+    if x == 0:
+        return "0"
+    d = Decimal(repr(float(x)))
+    return format(d.quantize(Decimal(1).scaleb(d.adjusted() - 1), rounding=ROUND_HALF_UP).normalize(), "f")
+
+
 def rows(p):
     return list(csv.DictReader(open(os.path.join(REPO, p))))
 
@@ -86,7 +95,7 @@ for cid, name in lab.items():
     assert len(ss) == 5, cid
     p50 = [float(r["p50_us"]) for r in ss]; p99 = [float(r["p99_us"]) for r in ss]
     nc = [r["bp_not_converged"] for r in ss]
-    ncs = "" if nc[0] == "" else f"{sum(int(x) for x in nc) / sum(int(r['calls']) for r in ss) * 100:.1f}%"
+    ncs = "" if nc[0] == "" else pct2(sum(int(x) for x in nc) / sum(int(r['calls']) for r in ss) * 100) + "%"
     out.append(f"| {name} | {np.median(p50):.0f} | [{min(p50):.0f}, {max(p50):.0f}] | {np.median(p99):,.0f} | "
                f"[{min(p99):,.0f}, {max(p99):,.0f}] | {ncs} |")
 # Frozen sets

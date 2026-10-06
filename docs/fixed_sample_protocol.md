@@ -63,7 +63,7 @@ and are not reported.
 
 ## Not changed
 
-- The frozen-set results of the original study stay reported as measured.
+- The frozen-set results of the submitted version stay reported as measured.
 - The neural controls cannot be re-scored, because their weights were not saved.
 - There is no circuit-level BB setting.
 

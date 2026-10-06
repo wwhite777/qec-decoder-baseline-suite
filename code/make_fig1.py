@@ -43,7 +43,7 @@ def build():
         for j in range(8):
             ax.add_patch(plt.Rectangle((gx + j * 0.0125, gy + i * 0.028), 0.0108, 0.024,
                                        fc=("#444444" if bits[i, j] else "#e6e6e6"), ec="none"))
-    ax.text(gx + 0.05, y + 0.012, "syndrome bits", ha="center", fontsize=FS - 0.4, color=GREY)
+    ax.text(gx + 0.05, y + 0.012, "syndrome bits", ha="center", fontsize=FS, color=GREY)
     arrow(ax, 0.315, y + h / 2, 0.34, y + h / 2)
     box(ax, 0.345, y, 0.135, h, "decoder\n(classical or\nlearned)", fc="#fff6e6", ec="#d9a441", fs=FS)
     arrow(ax, 0.485, y + h / 2, 0.51, y + h / 2)
@@ -57,7 +57,7 @@ def build():
     cols = [0.012, 0.058, 0.31, 0.61, 0.785]
     heads = ["", "code", "noise model", "decoder input", "reference decoder"]
     for x, t in zip(cols, heads):
-        ax.text(x + 0.004, 0.535, t, fontsize=FS - 0.2, color=GREY, va="center", style="italic")
+        ax.text(x + 0.004, 0.535, t, fontsize=FS, color=GREY, va="center", style="italic")
     rows = [("A", CA, "rotated surface code\n$d=5,7,9,11$", "circuit level: gates, measurements\nand resets can fail",
              "25-round detector\nhistory", "MWPM\n(PyMatching)"),
             ("B", CB, "bivariate-bicycle (BB) codes\n$[[72,12,6]]$, $[[144,12,12]]$", "code capacity: data flips only,\nperfect checks, one round",
@@ -73,7 +73,7 @@ def build():
             ax.text(x + 0.004, yy, t, fontsize=FS, color=INK, va="center", linespacing=1.15)
         yy -= 0.122
     ax.text(0.5, 0.03, "Protocol: failure count and exact interval for every LER  \u00b7  paired McNemar test on the same shots  "
-            "\u00b7  single-frame call latency", ha="center", fontsize=FS - 0.4, color=GREY, va="bottom")
+            "\u00b7  single-frame call latency", ha="center", fontsize=FS, color=GREY, va="bottom")
     return fig
 
 

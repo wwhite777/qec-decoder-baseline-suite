@@ -121,7 +121,7 @@ def build():
         axD.bar(i, p50, 0.6, color=cols[i], alpha=0.85, edgecolor="black", lw=0.3)
         axD.errorbar([i], [np.median(p99s)], yerr=[[np.median(p99s) - min(p99s)], [max(p99s) - np.median(p99s)]],
                      marker="_", ms=6, mew=1.2, color="black", capsize=1.5, lw=0.7, ls="none")
-    axD.set_yscale("log"); axD.set_xticks(range(len(order))); axD.set_xticklabels([o[1] for o in order], fontsize=5.6)
+    axD.set_yscale("log"); axD.set_xticks(range(len(order))); axD.set_xticklabels([o[1] for o in order], fontsize=6.0)
     axD.set_ylabel("single-frame call latency ($\\mu$s)")
     axD.bar([], [], color="#bbbbbb", label="p50 (median of 5 sessions)")
     axD.errorbar([], [], yerr=[], marker="_", color="black", ls="none", label="p99 (median, range)")
