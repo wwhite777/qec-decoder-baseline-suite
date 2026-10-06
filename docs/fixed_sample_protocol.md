@@ -80,5 +80,6 @@ and are not reported.
 
 These copies differ from the ones that produced `results/v3/` only in path handling: the default repository root, and
 the interpreter the driver calls. Two configurations re-run from these copies (`A_d5_p0.005` and
-`pair_C_bb72_T6_p0.02_osd7`) reproduced their recorded failure vectors exactly with the package versions listed in
-`results/v3/fixed_sample_runs.csv`.
+`pair_C_bb72_T6_p0.02_osd7`) reproduced their recorded failure vectors exactly on the machine that produced them, with the
+package versions listed in `results/v3/fixed_sample_runs.csv`. Stim's seeded sampling (Arm A) can differ on machines
+with a different SIMD width, so the shipped failure vectors are the portable reference.

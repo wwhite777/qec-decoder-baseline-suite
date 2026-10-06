@@ -10,7 +10,8 @@ from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 
 OUT_DIR = os.environ.get("P1_FIG_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "figures"))
 os.makedirs(OUT_DIR, exist_ok=True)
-plt.rcParams.update({"pdf.fonttype": 42, "ps.fonttype": 42, "font.size": 7.2, "font.family": "sans-serif", "font.sans-serif": ["Nimbus Sans", "DejaVu Sans"], "mathtext.fontset": "dejavusans"})
+# DejaVu Sans ships with matplotlib: the figure renders identically on any machine and embeds as TrueType (pdf.fonttype 42)
+plt.rcParams.update({"pdf.fonttype": 42, "ps.fonttype": 42, "font.size": 7.2, "font.family": "sans-serif", "font.sans-serif": ["DejaVu Sans"], "mathtext.fontset": "dejavusans"})
 INK, GREY = "#222222", "#666666"
 CA, CB, CC = "#1f77b4", "#2ca02c", "#d62728"
 
@@ -25,12 +26,12 @@ def arrow(ax, x0, y0, x1, y1):
     ax.add_patch(FancyArrowPatch((x0, y0), (x1, y1), arrowstyle="-|>", mutation_scale=7, lw=0.8, color=GREY))
 
 
-def main():
+def build():
     fig = plt.figure(figsize=(5.5, 3.05))
     ax = fig.add_axes([0, 0, 1, 1]); ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis("off")
-    FS = 6.4
+    FS = 6.0
     # top row: the decoding task as a prediction problem
-    ax.text(0.012, 0.965, "The decoding task", fontsize=7.6, weight="bold", color=INK, va="center")
+    ax.text(0.012, 0.965, "The decoding task", fontsize=7.0, weight="bold", color=INK, va="center")
     y, h = 0.70, 0.205
     box(ax, 0.012, y, 0.16, h, "encoded qubits\n+ physical noise\nat rate $p$", fs=FS)
     arrow(ax, 0.177, y + h / 2, 0.202, y + h / 2)
@@ -52,8 +53,8 @@ def main():
 
     # bottom: the three evaluation settings
     ax.text(0.012, 0.6, "Three evaluation settings, each with its own reference decoder (never compared across settings)",
-            fontsize=7.6, weight="bold", color=INK, va="center")
-    cols = [0.012, 0.058, 0.33, 0.585, 0.78]
+            fontsize=7.0, weight="bold", color=INK, va="center")
+    cols = [0.012, 0.058, 0.31, 0.61, 0.785]
     heads = ["", "code", "noise model", "decoder input", "reference decoder"]
     for x, t in zip(cols, heads):
         ax.text(x + 0.004, 0.535, t, fontsize=FS - 0.2, color=GREY, va="center", style="italic")
@@ -62,7 +63,7 @@ def main():
             ("B", CB, "bivariate-bicycle (BB) codes\n$[[72,12,6]]$, $[[144,12,12]]$", "code capacity: data flips only,\nperfect checks, one round",
              "one syndrome", "BP-OSD (ldpc)"),
             ("C", CC, "BB codes $[[72,12,6]]$ ($T{=}6$)\nand $[[144,12,12]]$ ($T{=}12$)", "phenomenological: data and\nmeasurement flips over $T$ rounds",
-             "$T$-round detector\nhistory", "BP-OSD on the\nspace-time checks")]
+             "$T{+}1$ rounds of\ndetection events", "BP-OSD on the\nspace-time checks")]
     yy = 0.43
     for tag, col, code, noise, inp, dec in rows:
         ax.add_patch(FancyBboxPatch((0.012, yy - 0.052), 0.976, 0.104, boxstyle="round,pad=0.004,rounding_size=0.01",
@@ -72,7 +73,12 @@ def main():
             ax.text(x + 0.004, yy, t, fontsize=FS, color=INK, va="center", linespacing=1.15)
         yy -= 0.122
     ax.text(0.5, 0.03, "Protocol: failure count and exact interval for every LER  \u00b7  paired McNemar test on the same shots  "
-            "\u00b7  single-frame call latency with intervals", ha="center", fontsize=FS - 0.2, color=GREY, va="bottom")
+            "\u00b7  single-frame call latency", ha="center", fontsize=FS - 0.4, color=GREY, va="bottom")
+    return fig
+
+
+def main():
+    fig = build()
     for ext, kw in (("pdf", {"metadata": {"CreationDate": None}}), ("png", {"dpi": 300})):  # no timestamp: reruns are byte-identical
         fig.savefig(os.path.join(OUT_DIR, f"fig1_overview.{ext}"), **kw)
     print("saved", os.path.join(OUT_DIR, "fig1_overview.pdf"))

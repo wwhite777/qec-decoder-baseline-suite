@@ -201,9 +201,12 @@ Two code-blind learned decoders were trained and are reported as negative contro
 
 ## Scoring your own decoder
 
-A decoder is any object with a method `decode(frame)` that returns a 1-D 0/1 array: either a physical correction or a
-prediction of the logical flips. The output length tells the harness which one it is (see the docstring of
-`code/harness.py`).
+A decoder is any object with a method `decode(frame)` that returns a 1-D 0/1 array. What it may return depends on the
+arm, and the output length tells the harness which kind it is (see the docstring of `code/harness.py`):
+- Arm A: one bit, the predicted flip of the logical observable.
+- Arm B: a physical correction (`n` bits) or the 12 predicted logical bits.
+- Arm C: a net data correction (`n` bits), the full space-time correction (`T*n + T*m` bits) or the 12 predicted logical
+  bits.
 
 ```python
 import sys; sys.path.insert(0, "code")
@@ -248,8 +251,13 @@ python code/plot_fig2.py                # Figure 2 from results/ (PDF + PNG)
 python code/make_fig1.py                # Figure 1
 ```
 
-With the same package versions, re-running a fixed-sample configuration reproduces its per-shot failure vector
-exactly. Stim's seeded sampling differs across Stim versions, so Arm A runs can differ under other Stim versions.
+On the machine that produced `results/v3/`, re-running fixed-sample configurations with these package versions
+reproduced their per-shot failure vectors exactly. That is not guaranteed elsewhere:
+- Stim's seeded sampling (Arm A) is reproducible only for the same Stim version, the same sequence of sampling calls and
+  a machine with the same SIMD width.
+- Arms B and C sample with NumPy's PCG64 generator.
+
+The shipped failure vectors and frozen arrays are the portable reference.
 
 The original study's scripts produced the frozen sets and their results:
 

@@ -3,7 +3,10 @@
   results/exp1, results/exp3          the original frozen-set results (open markers)
   results/v3/latency_sessions.csv     single-frame latency sessions (panel D)
 Every point carries its exact two-sided 95% Clopper-Pearson interval; a zero-failure point is a downward triangle at the
-upper end of its interval. Writes figures/fig2_baselines.pdf (vector) and .png (300 dpi).
+upper end of its interval. Markers that would overlap are drawn slightly off their p for visibility (the caption says so):
+frozen-set points in panel A at 0.93p and in panel C at 1.06p, and the fixed-sample point in panel B at 1.04p.
+Writes figures/fig2_baselines.pdf (vector) and .png (300 dpi). DejaVu Sans ships with matplotlib, so the figure renders
+identically on any machine and embeds as TrueType (pdf.fonttype 42).
 Usage: python code/plot_fig2.py
 """
 import csv, os
@@ -18,7 +21,7 @@ RES = os.environ.get("P1_RESULT_DIR", os.path.join(HERE, "..", "results"))
 OUT = os.environ.get("P1_FIG_DIR", os.path.join(HERE, "..", "figures"))
 os.makedirs(OUT, exist_ok=True)
 plt.rcParams.update({"pdf.fonttype": 42, "ps.fonttype": 42, "font.family": "sans-serif",
-                     "font.sans-serif": ["Nimbus Sans", "DejaVu Sans"], "mathtext.fontset": "dejavusans",
+                     "font.sans-serif": ["DejaVu Sans"], "mathtext.fontset": "dejavusans",
                      "font.size": 7.0, "axes.titlesize": 7.4, "axes.labelsize": 7.0, "xtick.labelsize": 6.4,
                      "ytick.labelsize": 6.4, "legend.fontsize": 6.0})
 DCOL = {5: "#1f77b4", 7: "#ff7f0e", 9: "#2ca02c", 11: "#9467bd"}
@@ -47,7 +50,7 @@ def point(ax, x, f, n, color, marker, filled=True, ms=3.6):
     return y
 
 
-def main():
+def build():
     fresh = rows(os.path.join(RES, "v3", "fixed_sample_runs.csv"))
     fig, axes = plt.subplots(2, 2, figsize=(5.5, 4.6))
     axA, axB, axC, axD = axes[0, 0], axes[0, 1], axes[1, 0], axes[1, 1]
@@ -105,9 +108,10 @@ def main():
     axC.grid(True, which="both", ls=":", lw=0.4, alpha=0.6)
     # D: latency sessions
     lat = rows(os.path.join(RES, "v3", "latency_sessions.csv"))
-    order = [("L_A_d7_p0.001", "A\nd=7"), ("L_A_d11_p0.001", "A\nd=11"), ("L_B_bb72_p0.02", "B\n72"),
-             ("L_B_bb144_p0.02", "B\n144"), ("L_C_bb72_T6_p0.005", "C 72\n.005"), ("L_C_bb72_T6_p0.02", "C 72\n.02"),
-             ("L_C_bb72_T6_p0.02_osd0", "C 72\nOSD-0"), ("L_C_bb72_T6_p0.02_bp", "C 72\nBP"), ("L_C_bb144_T12_p0.01", "C 144\n.01")]
+    # tick labels: arm / distance or code / p (OSD-0 and BP are the variants at p = 0.02)
+    order = [("L_A_d7_p0.001", "A\nd=7\n.001"), ("L_A_d11_p0.001", "A\nd=11\n.001"), ("L_B_bb72_p0.02", "B\n72\n.02"),
+             ("L_B_bb144_p0.02", "B\n144\n.02"), ("L_C_bb72_T6_p0.005", "C\n72\n.005"), ("L_C_bb72_T6_p0.02", "C\n72\n.02"),
+             ("L_C_bb72_T6_p0.02_osd0", "C\n72\nOSD-0"), ("L_C_bb72_T6_p0.02_bp", "C\n72\nBP"), ("L_C_bb144_T12_p0.01", "C\n144\n.01")]
     cols = ["#1f77b4", "#1f77b4", "#2ca02c", "#2ca02c", "#d62728", "#d62728", "#e377c2", "#7f7f7f", "#8c564b"]
     for i, (cid, _) in enumerate(order):
         ss = [r for r in lat if r["id"] == cid]
@@ -125,6 +129,11 @@ def main():
     axD.set_title("D  single-frame call latency", loc="left")
     axD.grid(True, which="both", axis="y", ls=":", lw=0.4, alpha=0.6)
     fig.tight_layout(pad=0.4, h_pad=0.8, w_pad=0.8)
+    return fig
+
+
+def main():
+    fig = build()
     for ext, kw in (("pdf", {"metadata": {"CreationDate": None}}), ("png", {"dpi": 300})):  # no timestamp: reruns are byte-identical
         fig.savefig(os.path.join(OUT, f"fig2_baselines.{ext}"), **kw)
     print("saved", os.path.join(OUT, "fig2_baselines.pdf"))
