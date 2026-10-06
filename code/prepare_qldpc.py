@@ -11,7 +11,7 @@ here (see NOTE below).
 Why BB / qLDPC: on surface codes MWPM is near-optimal (prepare.py + baseline_mwpm.py),
 so the neural edge must come from a code family where MWPM does not apply. BB codes are
 the leading low-overhead qLDPC memory (Bravyi et al., "High-threshold and low-overhead
-fault-tolerant quantum memory", Nature 630 (2024); arXiv:2308.07915). The classical
+fault-tolerant quantum memory", Nature 627 (2024); arXiv:2308.07915). The classical
 reference decoder here is **BP-OSD** (Panteleev & Kalachev; Roffe et al., `ldpc` package).
 
 Construction (Z_l x Z_m, cyclic shift matrices  x = S_l ⊗ I_m,  y = I_l ⊗ S_m):
@@ -134,7 +134,7 @@ def code_params(HX: np.ndarray, HZ: np.ndarray) -> dict:
     return {"n": n, "k": n - rx - rz, "rank_HX": rx, "rank_HZ": rz, "css_commute": css_ok}
 
 
-# distance is the published literature value for these exact polynomials (Nature 630, 2024);
+# distance is the published literature value for these exact polynomials (Nature 627, 2024);
 # n, k, CSS-commutation are verified directly above. We do NOT recompute the min-weight
 # logical (needs ILP/GAP search) — report d as literature and say so.
 LITERATURE_D = {"bb72": 6, "bb144": 12}

@@ -8,7 +8,10 @@ decoder whose median decode takes 121 microseconds takes 3,179 microseconds one 
 in a hundred. Neither fact is visible in the way classical baselines are usually
 reported.**
 
-This repository is the artifact for an unpublished short paper. It proposes no
+This repository is the artifact for the short paper *Measure the Baseline Before You Beat
+It: A Reproducible, Confidence-Interval-Grounded Suite of Classical Quantum-Error-Correction
+Decoders* (Woncheol Jeong and Hayoung Oh, Sungkyunkwan University), accepted at the AI for
+Science workshop (NeurIPS 2026). It proposes no
 decoder. It publishes the measurement that learned-decoder papers are implicitly
 comparing against, with the error bars and the timing methodology made explicit.
 
@@ -42,7 +45,7 @@ The separation **is** the contribution. These are never merged onto a shared axi
 |---|---|---|---|---|
 | **A** | rotated surface, `d = 5,7,9,11` | MWPM (`pymatching`) on the Stim detector-error model | circuit-level depolarizing, 25 rounds, `p = 1e-3` | 100,000 |
 | **B** | bivariate-bicycle `[[72,12,6]]`, `[[144,12,12]]` | BP-OSD (`ldpc`) | code-capacity, perfect single-shot syndrome | 50,000 |
-| **C** | same BB codes | BP-OSD over the space-time `H_st` | phenomenological, `T = d` noisy rounds, `q = p` | 2,000 |
+| **C** | `[[72,12,6]]` only (the `[[144,12,12]]`, `T = 12` run did not complete) | BP-OSD over the space-time `H_st` | phenomenological, `T = 6` noisy rounds, `q = p` | 2,000 |
 
 MWPM is near-optimal on the surface code *because* its detector graph is almost a
 matching graph; it is undefined on BB codes. There is no single classical baseline
@@ -88,8 +91,15 @@ what the same numeral does across arms: `p = 0.02` is a mild 8.78e-3 in Arm B an
 | BP-OSD, bb144 code-capacity | 15.9 us | 29.3 us | 40.0 us | 2.5 |
 | **BP-OSD, bb72 phenomenological** | **120.9 us** | **2933 us** | **3179 us** | **~26** |
 
+Surface rows at `p = 1e-3`; BB rows at `p = 0.02` (phenomenological: `p = q = 0.02`, `T = 6`);
+3,000 timed calls per row (2,000 for the phenomenological row), after 100 warm-up calls.
+
 MWPM's distribution is tight. BP-OSD over the space-time graph has a heavy right tail
-driven by the OSD fallback firing on hard syndromes. A throughput number divides total
+driven by the OSD fallback firing on hard syndromes. A later check
+(`code/diag_osd_convergence.py`, receipt in `results/verification_20261006/`) records whether
+belief propagation converged on each call (ldpc runs OSD only when it does not): it failed to
+converge on 139 of the 2,000 phenomenological frames, and every call in the slowest 5% was one
+of them; on the code-capacity frames it failed on only 10 (bb72) and 3 (bb144) of 3,000. A throughput number divides total
 time by shots and reports something near the median — the tail simply does not appear.
 For a decoder that has to keep up with a syndrome stream in real time, the tail is the
 specification.
@@ -102,11 +112,17 @@ competitive decoders:
 | Model | Arm | Learned LER | Reference LER | Gap |
 |---|---|---|---|---|
 | Code-blind MLP | A: surface `d = 5` | 8.27e-2 | MWPM 7.80e-4 | **~106x worse** |
-| Code-blind DeltaNet mixer | B: bb72, `p = 0.04` | 0.5011 | BP-OSD 7.94e-2 | **~6.3x worse** |
+| Code-blind DeltaNet-style mixer | B: bb72, `p = 0.04` | 0.501 † | BP-OSD 7.94e-2 | **~6x worse** † |
 
-A logical error rate of ~0.50 on a 12-bit logical target is roughly chance: the model
-never learned the decoding map. Both ingest the syndrome as a bare bit vector with no
-Tanner-graph or geometric structure, under a 300-second training budget. **This paper
+The MLP (120 s of training on 80,000 shots of the frozen `d = 5` set) was scored on the
+remaining 20,000 shots. On those same shots MWPM fails 14 times (7.0e-4) and always predicting
+"no flip" gives 0.209, so the MLP learned something but stays about two orders of magnitude
+behind MWPM. The mixer (300 s on 200,000 freshly sampled shots) has a mean per-logical-bit
+accuracy of about 0.86 and gets the full 12-bit logical-flip vector wrong on about half of the
+shots. † That run recorded its LER (0.50105) but not the shots it was scored on; 0.50105 is not
+a multiple of 1/50,000, so it was not scored on the whole frozen set, and the ratio is
+indicative only. Neither run saved weights, so neither is bit-reproducible. Both ingest the
+syndrome as a bare bit vector with no Tanner-graph or geometric structure. **This paper
 makes no competitive-decoder claim.** They are here because "a code-blind sequence
 mixer fails" is a useful floor, and because the honest thing to do with a losing model
 is publish the loss. [`docs/p1_neural_gap.md`](docs/p1_neural_gap.md) scopes what a
@@ -122,11 +138,16 @@ architectures) rather than pretending these are it.
 | `code/p1_intervals.py` | exact Clopper–Pearson intervals over the frozen result CSVs; no decode re-run |
 | `code/p1_latency.py` | online single-shot latency, timed one call at a time |
 | `code/train.py`, `code/neural_bposd_bonus.py` | the two negative controls |
+| `code/verify_redecode.py` | re-decodes the shipped validation arrays and recomputes all 16 failure counts and exact intervals (about one minute on a CPU) |
+| `code/diag_osd_convergence.py` | re-times BP-OSD calls and records whether BP converged (the OSD-tail mechanism check) |
+| `data/frozen_validation/` | the 17 exact validation arrays behind every count and latency, with `SHA256SUMS` |
+| `results/verification_20261006/` | re-decode and convergence receipts, with the package versions used |
 | `results/` | every frozen CSV, plus the interval summary and the latency note |
 | `docs/` | arm separation, phenomenological BB specification, honest neural-gap assessment |
 
 ```bash
-pip install stim pymatching ldpc numpy scipy matplotlib
+pip install stim pymatching ldpc numpy scipy matplotlib   # tested: stim 1.16.0, pymatching 2.4.0, ldpc 2.4.1
+python code/verify_redecode.py   # re-decode the shipped arrays: all 16 failure counts, exactly
 python code/prepare.py && python code/baseline_mwpm.py     # Arm A
 python code/prepare_qldpc.py && python code/baseline_bposd.py   # Arm B
 python code/prepare_qldpc_phenom.py && python code/baseline_bposd_phenom.py   # Arm C
@@ -134,9 +155,11 @@ python code/p1_intervals.py      # intervals over the frozen CSVs
 python code/p1_latency.py        # online latency distributions
 ```
 
-**Data provenance.** All data is synthetic and generated by public tools. Stim seeds
-are pinned (`20260708` for Arms A/B, `20260709` for Arm C) so each validation set is a
-frozen artifact. BB codes use `A = x^3 + y + y^2`, `B = y^3 + x + x^2`. BP-OSD runs
+**Data provenance.** All data is synthetic and generated by public tools. Seeds are
+pinned: Stim's sampler seed `20260708` for Arm A, NumPy seeds `20260708` for Arm B and
+`20260709` for Arm C. Stim's seeded sampling is not consistent across Stim versions, so the
+exact arrays are shipped in `data/frozen_validation/`; re-decoding them with stim 1.16.0,
+pymatching 2.4.0 and ldpc 2.4.1 reproduces all 16 failure counts exactly. BB codes use `A = x^3 + y + y^2`, `B = y^3 + x + x^2`. BP-OSD runs
 min-sum with scaling 0.625, serial schedule, `max_iter = 50`, OSD combination-sweep at
 order 7.
 
@@ -147,7 +170,7 @@ order 7.
   risk in the paper, and the surface result must not be read as standing in for
   "circuit-level qLDPC".
 - **BB code distances (6 and 12) are literature values** from Bravyi et al. (*Nature*
-  630, 2024) for these exact polynomials. They are **not** recomputed here; computing
+  627, 2024) for these exact polynomials. They are **not** recomputed here; computing
   the true minimum-weight logical needs an ILP/GAP search we did not run.
 - **Latency is single-threaded Python wall-clock on a shared CPU.** Absolute
   microseconds carry interpreter and scheduler overhead and are an upper bound on a
@@ -156,8 +179,25 @@ order 7.
 - **The rare-event points are under-resolved by design of the shot budget**, not by
   accident. Resolving surface `d >= 7` or bb144 at `p = 0.02` to a point estimate needs
   1e6–1e7 shots (roughly 100 logical failures for a ±10% interval).
+- **Arm C covers one code.** Only `[[72,12,6]]` is reported under phenomenological noise;
+  the `[[144,12,12]]` run (`T = 12`) did not complete.
 - **The learned decoders are negative controls only.** No comparison in this repository
-  supports any claim that a neural decoder is competitive with MWPM or BP-OSD.
+  supports any claim that a neural decoder is competitive with MWPM or BP-OSD. Both are
+  single runs without saved weights, and the mixer run did not record which shots it was
+  scored on.
+
+## Citation
+
+```bibtex
+@inproceedings{jeong2026measure,
+  title     = {Measure the Baseline Before You Beat It: A Reproducible, Confidence-Interval-Grounded
+               Suite of Classical Quantum-Error-Correction Decoders},
+  author    = {Jeong, Woncheol and Oh, Hayoung},
+  booktitle = {AI for Science Workshop at NeurIPS 2026},
+  year      = {2026},
+  note      = {Non-archival}
+}
+```
 
 ## License
 

@@ -43,7 +43,7 @@ Instances used:
 
 The CSS commutation `H_X H_Z^T = 0 (mod 2)` and `n, k` are checked directly at import via
 `code_params()`. The distance `d` is the **published literature value** for these exact
-polynomials (Bravyi et al., *Nature* 630, 2024; arXiv:2308.07915) — it is **not**
+polynomials (Bravyi et al., *Nature* 627, 2024; arXiv:2308.07915) — it is **not**
 recomputed here (min-weight logical search needs ILP/GAP). `T = d` is chosen per code
 (`ROUNDS = {"bb72": 6, "bb144": 12}`), the standard fault-tolerant choice of decoding as
 many noisy rounds as the distance.

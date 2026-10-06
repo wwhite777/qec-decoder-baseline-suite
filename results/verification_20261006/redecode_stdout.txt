@@ -1,0 +1,18 @@
+Arm A  d=5   78/100000  (frozen 78)
+Arm A  d=7   6/100000  (frozen 6)
+Arm A  d=9   3/100000  (frozen 3)
+Arm A  d=11  0/100000  (frozen 0)
+Arm B  bb72  p=0.02  439/50000  (frozen 439)
+Arm B  bb72  p=0.04  3969/50000  (frozen 3969)
+Arm B  bb72  p=0.06  12098/50000  (frozen 12098)
+Arm B  bb72  p=0.08  22741/50000  (frozen 22741)
+Arm B  bb144 p=0.02  2/50000  (frozen 2)
+Arm B  bb144 p=0.04  397/50000  (frozen 397)
+Arm B  bb144 p=0.06  4003/50000  (frozen 4003)
+Arm B  bb144 p=0.08  14464/50000  (frozen 14464)
+Arm C  bb72 T=6 p=q=0.02  106/2000  (frozen 106)
+Arm C  bb72 T=6 p=q=0.04  949/2000  (frozen 949)
+Arm C  bb72 T=6 p=q=0.06  1843/2000  (frozen 1843)
+Arm C  bb72 T=6 p=q=0.08  1991/2000  (frozen 1991)
+16 points re-decoded, 0 mismatches -> results/verification_20261006/redecode.json
+exit=0

@@ -1,7 +1,7 @@
 # P1 — Honest Assessment of the Neural QEC Baselines (the "strawman" gap)
 
-**Verdict.** The neural decoders in this repository are **strawmen**. They lose to the classical references by **one to four orders of
-magnitude** in logical error rate, and no honest paper can present them as competitive
+**Verdict.** The neural decoders in this repository are **strawmen**. They lose to the classical references by wide margins in logical
+error rate (about two orders of magnitude for the MLP, about 6x for the mixer), and no honest paper can present them as competitive
 decoders. This document (a) states exactly how far off they are, (b) explains *why* they are
 weak (it is architectural/setup, not a coincidence), and (c) scopes what a genuinely
 competitive neural QEC baseline would take. It does **not** propose to hack the existing
@@ -15,19 +15,23 @@ neural arm at all.
 | Neural model | Arm | Config | Neural LER | Reference LER | Gap |
 |---|---|---|---|---|---|
 | Naive MLP "teacher" | A: surface, circuit-level | `d=5`, `p=1e-3` | **8.27e-2** | MWPM **7.8e-4** | **~106x worse** |
-| DeltaNet-style linear-attention mixer | B: BB code-capacity | bb72, `p=0.04` | **5.01e-1** | BP-OSD **7.94e-2** | **~6.3x worse; LER ~= 0.5 = chance on k=12 bits** |
+| DeltaNet-style linear-attention mixer | B: BB code-capacity | bb72, `p=0.04` | **5.01e-1** | BP-OSD **7.94e-2** | **~6x worse (indicative; see below)** |
 
 Supporting detail:
 - The MLP (`nn-mlp0`) has ECE 0.073 and sits two orders of magnitude above MWPM — it is not
   in the same regime as the baseline at all.
-- The DeltaNet decoder (`nn-dnet0`) reaches only 0.86 *per-logical-bit* accuracy on `k=12`
-  bits, which compounds to a ~0.5 whole-vector LER (any of 12 bits wrong = failure). A
-  ~0.5 LER on a 12-bit logical-flip target is essentially **no better than guessing** the
-  joint flip; it never learned the decoding map.
+- The MLP was trained on 80,000 shots of the frozen `d=5` set and scored on the other 20,000;
+  on those same shots MWPM fails 14 times (7.0e-4) and always predicting "no flip" gives 0.209.
+- The DeltaNet decoder (`nn-dnet0`) reaches only ~0.86 mean *per-logical-bit* accuracy on `k=12`
+  bits and gets the whole 12-bit logical-flip vector wrong on about half of the shots (any bit
+  wrong = failure). Its errors are correlated across bits (independent errors at 0.86 per bit
+  would give an LER near 0.84). The run recorded its LER (0.50105) but not the shots it was
+  scored on; 0.50105 is not a multiple of 1/50,000, so it was not the whole frozen set and the
+  ratio to BP-OSD is indicative only.
 
 These are honest negative results. The right thing to report is that **off-the-shelf
-sequence mixers, trained for 300 s on a flattened syndrome with mean-pooling and a linear
-head, do not decode these codes** — not to bury them or re-label them as wins.
+models, trained for minutes (120 s for the MLP, 300 s for the mixer) on a flattened syndrome,
+do not decode these codes** — not to bury them or re-label them as wins.
 
 ---
 

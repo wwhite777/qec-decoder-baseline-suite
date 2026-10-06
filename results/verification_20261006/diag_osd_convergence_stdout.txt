@@ -1,0 +1,4 @@
+code_capacity_bb72_p0.02: BP did not converge on 10/3000 calls; share of the slowest 5% that did not converge = 0.07
+code_capacity_bb144_p0.02: BP did not converge on 3/3000 calls; share of the slowest 5% that did not converge = 0.02
+phenomenological_bb72_T6_p0.02: BP did not converge on 139/2000 calls; share of the slowest 5% that did not converge = 1.00
+exit=0

@@ -5,7 +5,7 @@ This is the reference logical error rate the neural decoder must beat on the qLD
 
 Decoder: ldpc.BpOsdDecoder (min-sum BP + Ordered-Statistics Decoding fallback), the
 Panteleev-Kalachev / Roffe BP-OSD used as the standard BB-code decoder in Bravyi et al.
-(Nature 630, 2024). Runs CPU-only (no GPU).
+(Nature 627, 2024). Runs CPU-only (no GPU).
 
 Run (CPU only):
     python baseline_bposd.py            # default: bb72 + bb144

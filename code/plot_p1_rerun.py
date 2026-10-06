@@ -13,7 +13,7 @@ Honest framing (see docs/p1_arms.md, docs/p1_neural_gap.md):
   * Panel D: ONLINE per-shot latency (p50/p95/p99), showing the OSD heavy right tail — the
     operational figure a real-time decoder must meet, distinct from batch throughput.
   * The neural decoders are NOT plotted as competitors: they are negative controls (strawmen,
-    1-4 orders of magnitude worse); a competitive learned decoder is scoped future work.
+    about 6x to about 100x worse); a competitive learned decoder is scoped future work.
 """
 import os, csv
 import numpy as np
