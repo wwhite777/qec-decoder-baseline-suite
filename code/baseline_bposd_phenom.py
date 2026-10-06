@@ -1,9 +1,9 @@
 """
 P1 frozen qLDPC baseline: BP-OSD on the bivariate-bicycle code(s) under PHENOMENOLOGICAL
-(multi-round, measurement-noisy) noise — the honest v2 that goes beyond code-capacity toward
-realistic fault-tolerant decoding. This is the reference logical error rate the neural decoder
-must beat in the multi-round setting, where a matching-based MWPM does not apply to BB codes
-and even BP-OSD must reason over the *space-time* detector graph.
+(multi-round, measurement-noisy) noise — the second BB setting, which goes beyond code-capacity toward
+realistic fault-tolerant decoding. This is the reference logical error rate for a learned decoder
+in the multi-round setting, where MWPM does not apply directly to BB codes and BP-OSD
+reasons over the *space-time* detector graph.
 
 Decoder: ldpc.BpOsdDecoder (min-sum BP + Ordered-Statistics Decoding fallback) applied to the
 (T+1)*m x (T*n + T*m) space-time detector check matrix H_st built in prepare_qldpc_phenom.py,

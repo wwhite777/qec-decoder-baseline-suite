@@ -2,7 +2,7 @@
 P1 prepare_qldpc_phenom.py — FROZEN contract for the qLDPC (bivariate-bicycle) track
 under **PHENOMENOLOGICAL noise** (multi-round, space-time decoding).
 
-This is the honest v2 that goes *beyond* code-capacity (prepare_qldpc.py) toward realistic
+This is the second BB setting, which goes *beyond* code-capacity (prepare_qldpc.py) toward realistic
 fault-tolerant decoding. Instead of a single noiseless shot of the syndrome, we run
 **T rounds of NOISY syndrome extraction**:
   * every round, each data qubit picks up an i.i.d. X error at rate  p   (Bernoulli),

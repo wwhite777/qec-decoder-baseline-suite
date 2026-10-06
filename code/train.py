@@ -3,9 +3,10 @@ train.py — NEGATIVE CONTROL: a code-blind residual MLP decoder on the surface 
 
 This is NOT a competitive decoder and is not presented as one. It reads the detector
 bits as a bare vector (no Tanner/detector-graph structure), predicts the logical
-observable flip, and also emits a calibrated probability. It loses to MWPM by ~2 orders
-of magnitude, which is the point: it measures what a structure-free model does under a
-small fixed budget. See docs/p1_neural_controls.md.
+observable flip, and also emits a calibrated probability. In the one recorded run (July 2026)
+it was about two orders of magnitude worse than MWPM on the same held-out shots. It is reported
+as a negative control: a structure-free model under a small fixed budget. See
+docs/p1_neural_controls.md.
 
 Contract: prints 'logical_error_rate: <f>', 'decode_latency_us: <f>', 'ece: <f>',
           'brier: <f>', 'peak_vram_mb: <f>'.
@@ -117,7 +118,7 @@ def main():
     print(f"mwpm_ref_ler:       {mwpm['logical_error_rate']:.8f}  (d={DISTANCE})")
     print(f"note: naive MLP baseline (negative control); MWPM is the surface-code reference.")
 
-    # log an honest row alongside the MWPM baseline row
+    # log this run's row alongside the MWPM baseline row
     import os
     tsv = os.path.join(os.environ.get(
         "P1_RESULT_DIR",
